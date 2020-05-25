@@ -1,0 +1,6 @@
+include:
+    - "_framework"
+    - "_bin"
+
+exclude:
+    - "README.template.md"

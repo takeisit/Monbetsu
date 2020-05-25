@@ -1,0 +1,202 @@
+﻿@page "/"
+@using System.Threading;
+@using Monbetsu.BlazorDemo.Models;
+@inject IJSRuntime JSRuntime;
+
+<div id="index">
+    <div id="result">
+        <div id="graph-image" @ref="graphImageElement"></div>
+    </div>
+    <textarea id="code" class="form-control" @bind="@graphCode" @oninput="CheckCodeChangeAsync">
+    </textarea>
+
+    <section id="menu">
+        <button class="btn @viewButtonStyle" id="view-button" @onclick="RefreshGraphAsync">view graph</button>
+        <button class="btn @classifyButtonStyle" id="classify-button" @onclick="ClassifyGraphAsync">classify</button>
+        <span>@resultMessage</span>
+    </section>
+</div>
+
+@code
+{
+    private string graphCode = "";
+    private string? viewingGraphCode = null;
+    private string resultMessage = "";
+
+    private string viewButtonStyle = "btn-primary";
+    private string classifyButtonStyle = "btn-secondary";
+
+    private ElementReference graphImageElement;
+    private Graph graph = Graph.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        graphCode = @"// Edge := FromNode -> ToNode [-> ToNode]*
+// Nodes with prefix '^' are start nodes. If no nodes have the prefix, the start nodes are auto detected.
+^0 -> 1
+1 -> 2
+1 -> 3
+2 -> 3
+2 -> 4
+3 -> 4
+4 -> 6
+0 -> 5 -> 6
+0 -> 6
+";
+
+    }
+
+    private async Task CheckCodeChangeAsync(ChangeEventArgs e)
+    {
+        var currentValue = (e.Value as string) ?? graphCode;
+
+        if (currentValue != viewingGraphCode)
+        {
+            viewButtonStyle = "btn-primary";
+            classifyButtonStyle = "btn-secondary";
+        }
+        else
+        {
+            viewButtonStyle = "btn-secondary";
+            classifyButtonStyle = "btn-primary";
+        }
+
+        //await JSRuntime.InvokeVoidAsync("console.log", $"style: {viewButtonStyle}, {classifyButtonStyle}, {e.Value}, {graphCode}");
+        await Task.Delay(0);
+    }
+
+    private async Task RefreshGraphAsync()
+    {
+        resultMessage = "";
+        viewingGraphCode = graphCode;
+        graph = Graph.From(graphCode);
+
+        resultMessage = $"node#:{graph.Nodes.Count}, edge#{graph.Edges.Count}, starts:{{{string.Join(", ", graph.StartNodes)}}}";
+
+        await CheckCodeChangeAsync(new ChangeEventArgs { Value = viewingGraphCode });
+
+        await ViewGraphAsync();
+    }
+
+    private async Task ClassifyGraphAsync()
+    {
+        try
+        {
+            resultMessage = "";
+
+            graph.Classify();
+
+            await ViewGraphAsync();
+        }
+        catch (Monbetsu.CyclicException exception)
+        {
+            resultMessage = exception.Message;
+        }
+        catch (Exception exception)
+        {
+            resultMessage = exception.ToString();
+        }
+    }
+
+    private static readonly IReadOnlyDictionary<SubgraphKind, string> SubgraphKindColors = new Dictionary<SubgraphKind, string>
+    {
+        [SubgraphKind.Edge] = "#000000",
+        [SubgraphKind.Series] = "#00c800",
+        [SubgraphKind.Parallel] = "#ff00ff",
+        [SubgraphKind.Knot] = "#0000ff"
+    };
+
+    private async Task ViewGraphAsync()
+    {
+        var labelIdSeq = 0;
+        var jsNodes = graph.Nodes.Select(node => new
+        {
+            id = node,
+            label = node,
+            shape = "ellipse",
+            color = new
+            {
+                border = "#2B7CE9",
+                background = "#D2E5FF"
+            }
+        }).ToList();
+        var jsEdges = graph.Edges.Select(edge => new
+        {
+            from = edge.From,
+            to = edge.To,
+            arrows = "to",
+            label = graph.EdgeResults.TryGetValue(edge, out var label) ? label.ToString() : "",
+            dashes = false,
+            color = "black",
+            font = new
+            {
+                color = "black"
+            }
+        }).Concat(graph.SubgraphResults.Select(subgraph => new
+        {
+            from = subgraph.StartNode,
+            to = subgraph.EndNode,
+            arrows = "to",
+            label = $"{subgraph.Label}\n{subgraph.Kind}\n{{{string.Join(", ", subgraph.Sublabels)}}}",
+            dashes = true,
+            color = SubgraphKindColors[subgraph.Kind],
+            font = new
+            {
+                color = SubgraphKindColors[subgraph.Kind]
+            }
+        })).SelectMany(jsEdge =>
+        {
+            if (jsEdge.label == "")
+            {
+                return new[] { jsEdge };
+            }
+
+            var node = new
+            {
+                id = $"label\t{labelIdSeq++}",
+                label = jsEdge.label,
+                shape = "box",
+                color = new
+                {
+                    border = jsEdge.color,
+                    background = "transparent"
+                }
+            };
+
+            jsNodes.Add(node);
+
+            var first = new
+            {
+                from = jsEdge.from,
+                to = node.id,
+                arrows = "",
+                label = "",
+                dashes = jsEdge.dashes,
+                color = jsEdge.color,
+                font = jsEdge.font,
+            };
+            var second = new
+            {
+                from = node.id,
+                to = jsEdge.to,
+                arrows = jsEdge.arrows,
+                label = "",
+                dashes = jsEdge.dashes,
+                color = jsEdge.color,
+                font = jsEdge.font,
+            };
+            return new[] { first, second };
+        }).ToList();
+
+        var jsData = new
+        {
+            nodes = jsNodes,
+            edges = jsEdges
+        };
+
+        await JSRuntime.InvokeVoidAsync("demo.draw", graphImageElement, jsData);
+    }
+
+}
