@@ -3,6 +3,12 @@
 ###############################################################################
 * text=auto
 
+# for blazor
+*.js binary
+*.dll binary
+*.dll.br binary
+*.dll.gz binary
+
 ###############################################################################
 # Set default behavior for command prompt diff.
 #
