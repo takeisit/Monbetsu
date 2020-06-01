@@ -7,12 +7,17 @@
     <div id="result">
         <div id="graph-image" @ref="graphImageElement"></div>
     </div>
-    <textarea id="code" class="form-control" @bind="@graphCode" @oninput="CheckCodeChangeAsync">
+    <textarea id="code" class="form-control" @bind="graphCode" @oninput="CheckCodeChangeAsync">
     </textarea>
 
-    <section id="menu">
+    <section id="menu" class="form-group row">
         <button class="btn @viewButtonStyle" id="view-button" @onclick="RefreshGraphAsync">view graph</button>
         <button class="btn @classifyButtonStyle" id="classify-button" @onclick="ClassifyGraphAsync">classify</button>
+        <select class="form-control-sm" @bind="variation">
+            <option value="@Variation.Default">Default</option>
+            <option value="@Variation.Unique">Unique</option>
+            <option value="@Variation.Integrated">Integrated</option>
+        </select>
         <span>@resultMessage</span>
     </section>
 </div>
@@ -28,6 +33,7 @@
 
     private ElementReference graphImageElement;
     private Graph graph = Graph.Empty;
+    private Variation variation = Variation.Default;
 
     protected override async Task OnInitializedAsync()
     {
@@ -86,7 +92,7 @@
         {
             resultMessage = "";
 
-            graph.Classify();
+            graph.Classify(variation);
 
             await ViewGraphAsync();
         }
@@ -139,7 +145,7 @@
             from = subgraph.StartNode,
             to = subgraph.EndNode,
             arrows = "to",
-            label = $"{subgraph.Label}\n{subgraph.Kind}\n{{{string.Join(", ", subgraph.Sublabels)}}}",
+            label = $"{subgraph.Label}\n{subgraph.Kind}\n{{{string.Join(", ", subgraph.Sublabels.OrderBy(_ => _.Id))}}}",
             dashes = true,
             color = SubgraphKindColors[subgraph.Kind],
             font = new
@@ -161,7 +167,7 @@
                 color = new
                 {
                     border = jsEdge.color,
-                    background = "transparent"
+                    background = "#FFFFFF"
                 }
             };
 

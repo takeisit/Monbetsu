@@ -5,11 +5,18 @@ using System.IO;
 using System.Linq;
 using NUnit.Framework;
 
-namespace Monbetsu.Test
+namespace Monbetsu.Test.Utils
 {
     class Visualizer
     {
-        internal static bool HaveFailedToOutputDot = false;
+        internal static Dot.RgbaColor EdgeColor = new Dot.RgbaColor(0, 0, 0, 255);
+        internal static Dot.RgbaColor SeriesColor = new Dot.RgbaColor(0, 200, 0, 255);
+        internal static Dot.RgbaColor ParallelColor = new Dot.RgbaColor(255, 0, 255, 255);
+        internal static Dot.RgbaColor KnotColor = new Dot.RgbaColor(0, 0, 255, 255);
+        internal static Dot.RgbaColor ErrorColor = new Dot.RgbaColor(255, 0, 0, 255);
+
+
+        internal static bool HaveFailedToOutputDot { get; private set; } = false;
     
         [Conditional("VISUALIZED")]
         internal static void GenerateImageFromDot(string dotCode, string outputPath)

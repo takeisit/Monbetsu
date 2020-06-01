@@ -5,7 +5,6 @@ using System.Text;
 using System.Text.Json;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Columns;
-using BenchmarkDotNet.Loggers;
 using BenchmarkDotNet.Reports;
 using BenchmarkDotNet.Running;
 
@@ -32,7 +31,7 @@ namespace Monbetsu.Benchmark
             }
         }
 
-        private Test.GraphGenerator.Graph graph = default!;
+        private Test.Utils.GraphGenerator.Graph graph = default!;
         private string graphSummary = "";
         private Result lastResult;
 
@@ -42,7 +41,7 @@ namespace Monbetsu.Benchmark
         [GlobalSetup]
         public void Setup()
         {
-            var generator = new Test.GraphGenerator
+            var generator = new Test.Utils.GraphGenerator
             {
                 NumberOfEdgesPerNode = 1..6,
                 NumberOfLayers = 2..7,
@@ -159,7 +158,7 @@ namespace Monbetsu.Benchmark
         }
 
         [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-        internal class SummaryColumnAttribute : ColumnConfigBaseAttribute
+        internal sealed class SummaryColumnAttribute : ColumnConfigBaseAttribute
         {
             internal static readonly ExtraColumn Column = new ExtraColumn("Summary");
 
@@ -170,7 +169,7 @@ namespace Monbetsu.Benchmark
         }
 
         [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-        internal class ResultColumnAttribute : ColumnConfigBaseAttribute
+        internal sealed class ResultColumnAttribute : ColumnConfigBaseAttribute
         {
             internal static readonly ExtraColumn Column = new ExtraColumn("Result");
 

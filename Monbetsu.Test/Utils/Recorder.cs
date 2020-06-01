@@ -3,27 +3,89 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection.Metadata;
+using System.Security.Cryptography;
+using FluentAssertions;
+using FluentAssertions.Execution;
+using Monbetsu.Test.Utils;
 using NUnit.Framework;
 
 namespace Monbetsu.Test
 {
-    class Recorder<TGraph, TNode, TEdge, TLabel>
+    [Flags]
+    public enum SnapshotFlags
+    {
+        None = 0,
+        Initial = 1,
+        Intermediates = 2,
+        Last = 4,
+        Assert = 8,
+    }
+
+    [Flags]
+    public enum EdgeStatus
+    {
+        None = 0,
+        Highlight = 3,
+        Subhighlight = 2,
+        Labeled = 4,
+    }
+
+    internal interface IAssertionResult
+    {
+        string ToMessage();
+    }
+
+    class AssertionFailedException : AssertionException
+    {
+        private static string MakeMessage(IReadOnlyList<IAssertionResult> results)
+        {
+            return string.Join("\n", results.Select(r => r.ToMessage()));
+        }
+
+        public IReadOnlyList<IAssertionResult> Results { get; }
+
+        public AssertionFailedException(IReadOnlyList<IAssertionResult> results) : base(MakeMessage(results))
+        {
+            Results = results;
+        }
+
+        public void ShouldAllOf<TAssertionResult, TKey>(Func<TAssertionResult, TKey> selector, params (TKey key, Action<TAssertionResult> asserter)[] actions)
+            where TAssertionResult: IAssertionResult
+        {
+            var actualDic = Results.OfType<TAssertionResult>().ToDictionary(item => selector(item), item => item);
+
+            actualDic.Should().HaveSameCount(actions);
+            using (new AssertionScope())
+            {
+                var expectedDic = actions.ToDictionary(a => a.key, a => a.asserter);
+
+                foreach (var kv in actualDic)
+                {
+                    using (var scope = new AssertionScope($"item {kv.Key}:"))
+                    {
+                        if (expectedDic.TryGetValue(kv.Key, out var action))
+                        {
+                            action(kv.Value);
+                        }
+                        else
+                        {
+                            scope.FailWith($"no assertion was found for {kv.Key}.");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    partial class Recorder<TGraph, TNode, TEdge, TLabel>
         where TGraph : notnull
         where TNode : notnull
         where TEdge : notnull
         where TLabel : class
     {
         public delegate string NameFactory(string testMethod, string patternId, int step);
-
-        [Flags]
-        public enum EdgeFlags
-        {
-            None = 0,
-            Highlight = 3,
-            Subhighlight = 2,
-            Labeled = 4,
-
-        }
 
         public class RecordOptions
         {
@@ -36,86 +98,98 @@ namespace Monbetsu.Test
 
             public Action<Dot.RootGraph>? OptionConfigurer { get; set; }
 
-            public Action<Dot.Edge, NodePair<TEdge>, TLabel?, EdgeFlags, RecordOptions>? EdgeDecorator { get; set; }
-            public Action<Dot.Edge, NodePair<TLabel>, TLabel, EdgeFlags, RecordOptions>? SeriesSubgraphDecorator { get; set; }
-            public Action<Dot.Edge, NodePair<UnorderedNTuple<TLabel>>, TLabel, EdgeFlags, RecordOptions>? ParallelSubgraphDecorator { get; set; }
-            public Action<Dot.Edge, NodePair<UnorderedNTuple<TLabel>>, TLabel, EdgeFlags, RecordOptions>? KnotSubgraphDecorator { get; set; }
+            public Action<Dot.Edge, NodePair<TNode, TEdge>, TLabel?, EdgeStatus, RecordOptions>? EdgeDecorator { get; set; }
+            public Action<Dot.Edge, NodePair<TNode, UnorderedNTuple<TLabel>>, TLabel, EdgeStatus, RecordOptions>? SeriesSubgraphDecorator { get; set; }
+            public Action<Dot.Edge, NodePair<TNode, UnorderedNTuple<TLabel>>, TLabel, EdgeStatus, RecordOptions>? ParallelSubgraphDecorator { get; set; }
+            public Action<Dot.Edge, NodePair<TNode, UnorderedNTuple<TLabel>>, TLabel, EdgeStatus, RecordOptions>? KnotSubgraphDecorator { get; set; }
 
             public bool FitToLast { get; set; }
-
-            public bool OmitProgress { get; set; }
+            public SnapshotFlags SnapshotFlags { get; set; } = SnapshotFlags.Initial | SnapshotFlags.Intermediates | SnapshotFlags.Last;
             public ImplementationVersions Versions { get; set; } = ImplementationVersions.Latest;
 
         }
 
-        public class NodePair<TVia> : IEquatable<NodePair<TVia>?>
+        [DebuggerDisplay("{Kind}: '{Label}'({Key})")]
+        public class LabelKey : IEquatable<LabelKey?>
         {
-            public TNode StartNode { get; }
-            public TVia Via { get; }
-            public TNode EndNode { get; }
+            public TLabel Label { get; }
+            public int Key { get; }
+            public GroupKind Kind { get; }
 
-            public NodePair(TNode startNode, TVia via, TNode endNode)
+            public LabelKey(TLabel label, int key, GroupKind kind)
             {
-                StartNode = startNode;
-                Via = via;
-                EndNode = endNode;
-            }
-
-            public void Deconstruct(out TNode startNode, out TVia via, out TNode endNode)
-            {
-                startNode = StartNode;
-                via = Via;
-                endNode = EndNode;
+                Label = label ?? throw new ArgumentNullException(nameof(label));
+                Key = key;
+                Kind = kind;
             }
 
             public override bool Equals(object? obj)
             {
-                return Equals(obj as Recorder<TGraph, TNode, TEdge, TLabel>.NodePair<TVia>);
+                return Equals(obj as LabelKey);
             }
 
-            public bool Equals(Recorder<TGraph, TNode, TEdge, TLabel>.NodePair<TVia>? other)
+            public bool Equals(LabelKey? other)
             {
                 return other != null &&
-                       EqualityComparer<TNode>.Default.Equals(StartNode, other.StartNode) &&
-                       EqualityComparer<TVia>.Default.Equals(Via, other.Via) &&
-                       EqualityComparer<TNode>.Default.Equals(EndNode, other.EndNode);
+                       EqualityComparer<TLabel>.Default.Equals(Label, other.Label) &&
+                       Key == other.Key &&
+                       Kind == other.Kind;
             }
 
             public override int GetHashCode()
             {
-                return HashCode.Combine(StartNode, Via, EndNode);
+                return HashCode.Combine(Label, Key, Kind);
             }
         }
+
+        class StepLog
+        {
+            public int Step { get; }
+            public List<NodePair<TNode, TEdge>> EdgeKeys { get; }
+            public List<NodePair<TNode, UnorderedNTuple<TLabel>>> SerKeys { get; }
+            public List<NodePair<TNode, UnorderedNTuple<TLabel>>> ParKeys { get; }
+            public List<NodePair<TNode, UnorderedNTuple<TLabel>>> KnotKeys { get; }
+            public List<object>? Highlights { get; }
+
+            public string? GeneratedPath { get; set; }
+
+            public StepLog(int step, List<NodePair<TNode, TEdge>> edgeKeys, List<NodePair<TNode, UnorderedNTuple<TLabel>>> serKeys, List<NodePair<TNode, UnorderedNTuple<TLabel>>> parKeys, List<NodePair<TNode, UnorderedNTuple<TLabel>>> knotKeys, List<object>? highlights)
+            {
+                Step = step;
+                EdgeKeys = edgeKeys ?? throw new ArgumentNullException(nameof(edgeKeys));
+                SerKeys = serKeys ?? throw new ArgumentNullException(nameof(serKeys));
+                ParKeys = parKeys ?? throw new ArgumentNullException(nameof(parKeys));
+                KnotKeys = knotKeys ?? throw new ArgumentNullException(nameof(knotKeys));
+                Highlights = highlights;
+            }
+        }
+
+        public IReadOnlyDictionary<NodePair<TNode, TEdge>, LabelKey> EdgeResults => edgeResults;
+        public IReadOnlyDictionary<NodePair<TNode, UnorderedNTuple<TLabel>>, LabelKey> SerResults => serResults;
+        public IReadOnlyDictionary<NodePair<TNode, UnorderedNTuple<TLabel>>, LabelKey> ParResults => parResults;
+        public IReadOnlyDictionary<NodePair<TNode, UnorderedNTuple<TLabel>>, LabelKey> KnotResults => knotResults;
+        public IReadOnlyDictionary<LabelKey, LabelKey> LabelParents => labelParents;
+        public ILookup<LabelKey, LabelKey> LabelChildren => labelParents.ToLookup(kv => kv.Value, kv => kv.Key);
 
         private RecordOptions options;
         private readonly string outputDirPath;
         private readonly Func<TNode, string> nodeToIdFunc;
 
-        private Dictionary<NodePair<TEdge>, TLabel> edgeResults = new Dictionary<NodePair<TEdge>, TLabel>();
-        private Dictionary<NodePair<TLabel>, TLabel> serResults = new Dictionary<NodePair<TLabel>, TLabel>();
-        private Dictionary<NodePair<UnorderedNTuple<TLabel>>, TLabel> parResults = new Dictionary<NodePair<UnorderedNTuple<TLabel>>, TLabel>();
-        private Dictionary<NodePair<UnorderedNTuple<TLabel>>, TLabel> knotResults = new Dictionary<NodePair<UnorderedNTuple<TLabel>>, TLabel>();
-        private Dictionary<TLabel, TLabel> labelParents = new Dictionary<TLabel, TLabel>();
+        private readonly Dictionary<NodePair<TNode, TEdge>, LabelKey> edgeResults = new Dictionary<NodePair<TNode, TEdge>, LabelKey>();
+        private readonly Dictionary<NodePair<TNode, UnorderedNTuple<TLabel>>, LabelKey> serResults = new Dictionary<NodePair<TNode, UnorderedNTuple<TLabel>>, LabelKey>();
+        private readonly Dictionary<NodePair<TNode, UnorderedNTuple<TLabel>>, LabelKey> parResults = new Dictionary<NodePair<TNode, UnorderedNTuple<TLabel>>, LabelKey>();
+        private readonly Dictionary<NodePair<TNode, UnorderedNTuple<TLabel>>, LabelKey> knotResults = new Dictionary<NodePair<TNode, UnorderedNTuple<TLabel>>, LabelKey>();
+        private readonly Dictionary<LabelKey, LabelKey> labelParents = new Dictionary<LabelKey, LabelKey>();
+        private readonly Dictionary<TLabel, List<LabelKey>> topLabels = new Dictionary<TLabel, List<LabelKey>>();
         private List<object>? highlights = null;
 
-        private List<(
-                    List<NodePair<TEdge>> edgeKeys,
-                    List<NodePair<TLabel>> serKeys,
-                    List<NodePair<UnorderedNTuple<TLabel>>> parKeys,
-                    List<NodePair<UnorderedNTuple<TLabel>>> knotKeys,
-                    List<object>? highlights
-                    )> incrementalResults = new List<(
-                    List<NodePair<TEdge>> edgeKeys,
-                    List<NodePair<TLabel>> serKeys,
-                    List<NodePair<UnorderedNTuple<TLabel>>> parKeys,
-                    List<NodePair<UnorderedNTuple<TLabel>>> knotKeys,
-                    List<object>? highlights
-                    )>();
-
+        private readonly LinkedList<StepLog> resultLogs = new LinkedList<StepLog>();
 
         private string runId = "";
-        private List<NodePair<TEdge>> graphEdges = new List<NodePair<TEdge>>();
+        private List<NodePair<TNode, TEdge>> graphEdges = new List<NodePair<TNode, TEdge>>();
+        private int generatedStepCounter = 0;
         private int stepCounter = 0;
+        private int labelKeyCounter = 0;
 
         private readonly List<string> outputImagePaths = new List<string>();
 
@@ -126,29 +200,59 @@ namespace Monbetsu.Test
             this.outputDirPath = outputDirPath;
         }
 
-
-        private void SaveStep()
+        private void Step(object? highlight, LabelKey? highlightLabel)
         {
-            if (options.OmitProgress && incrementalResults.Count > 1)
+            highlights?.Clear();
+
+            if (highlight != null)
             {
-                incrementalResults.RemoveAt(1);
+                highlights?.Add(highlight);
+            }
+            if (highlightLabel != null)
+            {
+                highlights?.Add(highlightLabel);
             }
 
-            incrementalResults.Add(
-                (
+            resultLogs.AddLast(new StepLog(
+                stepCounter,
                 edgeResults.Keys.ToList(),
                 serResults.Keys.ToList(),
                 parResults.Keys.ToList(),
                 knotResults.Keys.ToList(),
                 highlights?.ToList()
                 ));
+
+            if (!options.FitToLast)
+            {
+                var step = resultLogs.First();
+                if (step.Step == 0)
+                {
+                    if (options.SnapshotFlags.HasFlag(SnapshotFlags.Initial))
+                    {
+                        GenerateStep(step.EdgeKeys, step.SerKeys, step.ParKeys, step.KnotKeys, step.Highlights);
+                        resultLogs.RemoveFirst();
+                    }
+                }
+                else 
+                {
+                    if (resultLogs.Count > 1)
+                    {
+                        if (options.SnapshotFlags.HasFlag(SnapshotFlags.Intermediates))
+                        {
+                            GenerateStep(step.EdgeKeys, step.SerKeys, step.ParKeys, step.KnotKeys, step.Highlights);
+                        }
+                        resultLogs.RemoveFirst();
+                    }
+                }
+            }
+            stepCounter++;
         }
 
-        private void GenerateStep(
-                    IEnumerable<NodePair<TEdge>>? edgeKeys = null,
-                    IEnumerable<NodePair<TLabel>>? serKeys = null,
-                    IEnumerable<NodePair<UnorderedNTuple<TLabel>>>? parKeys = null,
-                    IEnumerable<NodePair<UnorderedNTuple<TLabel>>>? knotKeys = null,
+        private string? GenerateStep(
+                    IEnumerable<NodePair<TNode, TEdge>>? edgeKeys = null,
+                    IEnumerable<NodePair<TNode, UnorderedNTuple<TLabel>>>? serKeys = null,
+                    IEnumerable<NodePair<TNode, UnorderedNTuple<TLabel>>>? parKeys = null,
+                    IEnumerable<NodePair<TNode, UnorderedNTuple<TLabel>>>? knotKeys = null,
                     IEnumerable<object>? highlights = null
                     )
         {
@@ -161,7 +265,7 @@ namespace Monbetsu.Test
                     Id = $"S{subgraphIdCounter++}",
                     Style = Dot.ClusterStyle.invis
                 } as Dot.SubgraphBase);
-            var parentSubgraphs = new Dictionary<TLabel, Dot.GraphBase>();
+            var parentSubgraphs = new Dictionary<LabelKey, Dot.GraphBase>();
             var subgraphParents = new Dictionary<Dot.GraphBase, Dot.GraphBase>();
             foreach (var g in labelParents.ToLookup(kv => kv.Value, kv => kv.Key))
             {
@@ -194,23 +298,21 @@ namespace Monbetsu.Test
             }
             subgraphParents[rootGraph] = rootGraph;
 
-            bool isSubhighlight(TLabel label)
+            bool isSubhighlight(LabelKey label)
             {
                 if (highlights != null && options.HighlightBelongingEdges)
                 {
                     return highlights.Select(h =>
                     {
-                        TLabel? ancestorLabel = null;
+                        LabelKey? ancestorLabel = null;
                         switch (h)
                         {
-                            case NodePair<TLabel> h0:
-                                if (serKeys?.Contains(h0) == true)
+                            case NodePair<TNode, UnorderedNTuple<TLabel>> h1:
+                                if (serKeys?.Contains(h1) == true)
                                 {
-                                    serResults?.TryGetValue(h0, out ancestorLabel);
+                                    serResults?.TryGetValue(h1, out ancestorLabel);
                                 }
-                                break;
-                            case NodePair<UnorderedNTuple<TLabel>> h1:
-                                if (parKeys?.Contains(h1) == true)
+                                else if (parKeys?.Contains(h1) == true)
                                 {
                                     parResults?.TryGetValue(h1, out ancestorLabel);
                                 }
@@ -243,8 +345,8 @@ namespace Monbetsu.Test
 
             foreach (var edge in graphEdges)
             {
-                Dot.IColor color = Dot.NamedColor.Black;
-                var edgeFlags = EdgeFlags.None;
+                var color = Visualizer.EdgeColor;
+                var edgeFlags = EdgeStatus.None;
 
                 if (edgeResults.TryGetValue(edge, out var label) && parentSubgraphs.TryGetValue(label, out var graph))
                 {
@@ -252,31 +354,31 @@ namespace Monbetsu.Test
                     {
                         if (highlights.Contains(edge))
                         {
-                            edgeFlags |= EdgeFlags.Highlight;
+                            edgeFlags |= EdgeStatus.Highlight;
                         }
                         else if (isSubhighlight(label))
                         {
-                            edgeFlags |= EdgeFlags.Subhighlight;
+                            edgeFlags |= EdgeStatus.Subhighlight;
                         }
                         else
                         {
-                            color = new Dot.RgbaColor(0, 0, 0, 64);
+                            color = color.WithAlpha(64);
                         }
                     }
 
                     var fontColor = color;
                     if (options.HideLabels)
                     {
-                        fontColor = Dot.NamedColor.Transparent;
+                        fontColor = fontColor.WithAlpha(0);
                     }
 
                     switch (edgeKeys?.Contains(edge))
                     {
                         case false:
-                            fontColor = Dot.NamedColor.Transparent;
+                            fontColor = fontColor.WithAlpha(0);
                             break;
                         case true:
-                            edgeFlags |= EdgeFlags.Labeled;
+                            edgeFlags |= EdgeStatus.Labeled;
                             break;
                     }
 
@@ -284,11 +386,10 @@ namespace Monbetsu.Test
                     {
                         From = nodeToIdFunc(edge.StartNode),
                         To = nodeToIdFunc(edge.EndNode),
-                        //Label = label.LabelText,
                         Color = color,
                         FontColor = fontColor,
                     };
-                    options.EdgeDecorator?.Invoke(dotEdge, edge, label, edgeFlags, options);
+                    options.EdgeDecorator?.Invoke(dotEdge, edge, label.Label, edgeFlags, options);
                     graph.Edges.Add(dotEdge);
                 }
                 else
@@ -309,203 +410,110 @@ namespace Monbetsu.Test
                 }
             }
 
-
-            foreach (var kv in knotResults)
+            void MakeSubgraphEdges(
+                Dictionary<NodePair<TNode, UnorderedNTuple<TLabel>>, LabelKey> result,
+                IEnumerable<NodePair<TNode, UnorderedNTuple<TLabel>>>? progress,
+                Dot.RgbaColor color,
+                Action<Dot.Edge, NodePair<TNode, UnorderedNTuple<TLabel>>, TLabel, EdgeStatus, RecordOptions>? decorator
+                )
             {
-                var (fromNode, sublabels, toNode) = kv.Key;
-                var graph = subgraphs[kv.Value];
-
-                var edgeFlags = EdgeFlags.None;
-                Dot.IColor color = Dot.NamedColor.Blue;
-
-                switch(highlights?.Contains(kv.Key))
+                foreach (var kv in result)
                 {
-                    case false:
-                        color = new Dot.RgbaColor(0, 0, 255, 64);
-                        break;
-                    case true:
-                        edgeFlags |= EdgeFlags.Highlight;
-                        break;
+                    var (fromNode, sublabels, toNode) = kv.Key;
+                    var graph = subgraphs[kv.Value];
+
+                    var edgeFlags = EdgeStatus.None;
+                    
+                    if (highlights != null)
+                    {
+                        if (highlights.Contains(kv.Key))
+                        {
+                            edgeFlags |= EdgeStatus.Highlight;
+                        }
+                        else if (isSubhighlight(kv.Value))
+                        {
+                            edgeFlags |= EdgeStatus.Subhighlight;
+                            color = color.WithAlpha(128);
+                        }
+                        else
+                        {
+                            color = color.WithAlpha(64);
+                        }
+                    }
+
+                    if (options.HideSubgraphEdges)
+                    {
+                        color = color.WithAlpha(0);
+                    }
+
+                    switch (progress?.Contains(kv.Key))
+                    {
+                        case false:
+                            color = color.WithAlpha(0);
+                            break;
+                        case true:
+                            edgeFlags |= EdgeStatus.Labeled;
+                            break;
+                    }
+
+                    var fontColor = color;
+                    if (options.HideLabels)
+                    {
+                        fontColor = fontColor.WithAlpha(0);
+                    }
+
+                    var dotEdge = new Dot.Edge
+                    {
+                        From = nodeToIdFunc(fromNode),
+                        To = nodeToIdFunc(toNode),
+                        Color = color,
+                        FontColor = fontColor,
+                        Style = Dot.EdgeStyle.dashed,
+                    };
+
+                    decorator?.Invoke(dotEdge, kv.Key, kv.Value.Label, edgeFlags, options);
+
+                    var (edges, points) = dotEdge.SplitByInvisibleRelay(2);
+
+                    edges[0].Label = "";
+                    edges[2].Label = "";
+
+                    subgraphParents[graph].Edges.Add(edges[0]);
+                    graph.Edges.Add(edges[1]);
+                    subgraphParents[graph].Edges.Add(edges[2]);
+                    graph.Nodes.AddRange(points);
                 }
-
-                if (options.HideSubgraphEdges)
-                {
-                    color = Dot.NamedColor.Transparent;
-                }
-                
-                switch(knotKeys?.Contains(kv.Key))
-                {
-                    case false:
-                        color = Dot.NamedColor.Transparent;
-                        break;
-                    case true:
-                        edgeFlags |= EdgeFlags.Labeled;
-                        break;
-                }
-
-                var fontColor = color;
-                if (options.HideLabels)
-                {
-                    fontColor = Dot.NamedColor.Transparent;
-                }
-
-                var dotEdge = new Dot.Edge
-                {
-                    From = nodeToIdFunc(fromNode),
-                    To = nodeToIdFunc(toNode),
-                    Color = color,
-                    FontColor = fontColor,
-                    Style = Dot.EdgeStyle.dashed,
-                };
-
-                options.KnotSubgraphDecorator?.Invoke(dotEdge, kv.Key, kv.Value, edgeFlags, options);
-
-                var (edges, points) = dotEdge.SplitByInvisibleRelay(2);
-
-                edges[0].Label = "";
-                edges[2].Label = "";
-
-                subgraphParents[graph].Edges.Add(edges[0]);
-                graph.Edges.Add(edges[1]);
-                subgraphParents[graph].Edges.Add(edges[2]);
-                graph.Nodes.AddRange(points);
             }
 
-            foreach (var kv in serResults)
-            {
-                var (fromNode, sub, toNode) = kv.Key;
-                var graph = subgraphs[kv.Value];
-
-                var edgeFlags = EdgeFlags.None;
-                Dot.IColor color = new Dot.RgbaColor(0, 200, 0, 255);
-
-                switch (highlights?.Contains(kv.Key))
-                {
-                    case false:
-                        color = new Dot.RgbaColor(0, 200, 0, 64);
-                        break;
-                    case true:
-                        edgeFlags |= EdgeFlags.Highlight;
-                        break;
-                }
-
-                if (options.HideSubgraphEdges)
-                {
-                    color = Dot.NamedColor.Transparent;
-                }
-                switch (serKeys?.Contains(kv.Key))
-                {
-                    case false:
-                        color = Dot.NamedColor.Transparent;
-                        break;
-                    case true:
-                        edgeFlags |= EdgeFlags.Labeled;
-                        break;
-                }
-
-                var fontColor = color;
-                if (options.HideLabels)
-                {
-                    fontColor = Dot.NamedColor.Transparent;
-                }
-
-                var dotEdge = new Dot.Edge
-                {
-                    From = nodeToIdFunc(fromNode),
-                    To = nodeToIdFunc(toNode),
-                    Color = color,
-                    FontColor = fontColor,
-                    Style = Dot.EdgeStyle.dashed,
-                };
-
-                options.SeriesSubgraphDecorator?.Invoke(dotEdge, kv.Key, kv.Value, edgeFlags, options);
-
-                var (edges, points) = dotEdge.SplitByInvisibleRelay(2);
-                edges[0].Label = "";
-                edges[2].Label = "";
-
-                subgraphParents[graph].Edges.Add(edges[0]);
-                graph.Edges.Add(edges[1]);
-                subgraphParents[graph].Edges.Add(edges[2]);
-                graph.Nodes.AddRange(points);
-            }
-
-            foreach (var kv in parResults)
-            {
-                var (fromNode, sublabels, toNode) = kv.Key;
-                var graph = subgraphs[kv.Value];
-
-                var edgeFlags = EdgeFlags.None;
-                Dot.IColor color = new Dot.RgbaColor(255, 0, 255, 255);
-
-                switch (highlights?.Contains(kv.Key))
-                {
-                    case false:
-                        color = new Dot.RgbaColor(255, 0, 255, 64);
-                    break;
-                    case true:
-                        edgeFlags |= EdgeFlags.Highlight;
-                    break;
-                }
-
-                if (options.HideSubgraphEdges)
-                {
-                    color = Dot.NamedColor.Transparent;
-                }
-                switch (parKeys?.Contains(kv.Key))
-                {
-                    case false:
-                        color = Dot.NamedColor.Transparent;
-                    break;
-                    case true:
-                        edgeFlags |= EdgeFlags.Labeled;
-                    break;
-                }
-
-                var fontColor = color;
-                if (options.HideLabels)
-                {
-                    fontColor = Dot.NamedColor.Transparent;
-                }
-
-                var dotEdge = new Dot.Edge
-                {
-                    From = nodeToIdFunc(fromNode),
-                    To = nodeToIdFunc(toNode),
-                    Color = color,
-                    FontColor = fontColor,
-                    Style = Dot.EdgeStyle.dashed,
-                };
-
-                options.ParallelSubgraphDecorator?.Invoke(dotEdge, kv.Key, kv.Value, edgeFlags, options);
-
-                var (edges, points) = dotEdge.SplitByInvisibleRelay(2);
-                edges[0].Label = "";
-                edges[2].Label = "";
-                
-                subgraphParents[graph].Edges.Add(edges[0]);
-                graph.Edges.Add(edges[1]);
-                subgraphParents[graph].Edges.Add(edges[2]);
-                graph.Nodes.AddRange(points);
-            }
+            MakeSubgraphEdges(serResults, serKeys, Visualizer.SeriesColor, options.SeriesSubgraphDecorator);
+            MakeSubgraphEdges(parResults, parKeys, Visualizer.ParallelColor, options.ParallelSubgraphDecorator);
+            MakeSubgraphEdges(knotResults, knotKeys, Visualizer.KnotColor, options.KnotSubgraphDecorator);
 
             options.OptionConfigurer?.Invoke(rootGraph);
 
-            var index = stepCounter++;
-            var outputPath = Path.Combine(outputDirPath, (options.NameFactory?.Invoke(TestContext.CurrentContext.Test.Name, runId, index) ?? $"step-{index:D4}") + ".png");
+            var index = generatedStepCounter++;
+            var outputPath = Path.Combine(outputDirPath, (options.NameFactory?.Invoke(TestContext.CurrentContext.Test.Name, runId, index) ?? $"{TestContext.CurrentContext.Test.Name}_{runId}_step-{index:D4}") + ".png");
 
 
             Visualizer.GenerateImageFromDot(rootGraph.Build(), outputPath);
             if (File.Exists(outputPath))
             {
                 outputImagePaths.Add(outputPath);
+                return outputPath;
             }
+
+            return null;
         }
 
-        internal IEnumerable<string> Record(string id, IEnumerable<(TNode fromNode, TEdge edge, TNode toNode)> edges, Action<EdgeLabeler<TGraph, TNode, TEdge, TLabel>, SeriesSubgraphLabeler<TGraph, TNode, TLabel>, ParallelSubgraphLabeler<TGraph, TNode, TLabel>, KnotSubgraphLabeler<TGraph, TNode, TLabel>> run)
+        internal IEnumerable<string> Record(
+            string id,
+            IEnumerable<NodePair<TNode, TEdge>> edges,
+            Action<Recorder<TGraph, TNode, TEdge, TLabel>> run,
+            Func<Recorder<TGraph, TNode, TEdge, TLabel>, IEnumerable<IAssertionResult>?>? assert = null
+            )
         {
             runId = id;
-            graphEdges = edges.Select(t => new NodePair<TEdge>(t.fromNode, t.edge, t.toNode)).ToList();
+            graphEdges = edges.Select(t => new NodePair<TNode, TEdge>(t.StartNode, t.Via, t.EndNode)).ToList();
 
 
             edgeResults.Clear();
@@ -513,94 +521,153 @@ namespace Monbetsu.Test
             parResults.Clear();
             knotResults.Clear();
             labelParents.Clear();
+            topLabels.Clear();
             highlights?.Clear();
 
-            incrementalResults.Clear();
+            resultLogs.Clear();
 
 
             highlights = options.HighlightLatests ? new List<object>() : null;
-            
-            stepCounter = 0;
 
+            labelKeyCounter = 0;
+            stepCounter = 0;
+            generatedStepCounter = 0;
 
             Step(null, null);
 
-            run(LabelEdge, LabelSeries, LabelParallel, LabelKnot);
+            Exception? exception = null;
+
+            try
+            {
+                run(this);
+            }
+            catch(Exception e)
+            {
+                exception = e;
+            }
 
             if (options.FitToLast)
             {
-                foreach (var step in incrementalResults)
+                foreach (var step in resultLogs)
                 {
-                    GenerateStep(step.edgeKeys, step.serKeys, step.parKeys, step.knotKeys, step.highlights);
+                    var isGeneratable = options.SnapshotFlags.HasFlag(SnapshotFlags.Initial) && step == resultLogs.First()
+                                    || options.SnapshotFlags.HasFlag(SnapshotFlags.Last) && step == resultLogs.Last()
+                                    || options.SnapshotFlags.HasFlag(SnapshotFlags.Intermediates);
+
+                    if (isGeneratable)
+                    {
+                        GenerateStep(step.EdgeKeys, step.SerKeys, step.ParKeys, step.KnotKeys, step.Highlights);
+                    }
+                }
+            }
+            else
+            {
+                if (options.SnapshotFlags.HasFlag(SnapshotFlags.Last))
+                {
+                    if (resultLogs.Count > 0)
+                    {
+                        var step = resultLogs.Last();
+                        GenerateStep(step.EdgeKeys, step.SerKeys, step.ParKeys, step.KnotKeys, step.Highlights);
+                    }
+                }
+            }
+
+            if (exception != null)
+            {
+                throw new Exception("exception occured in runnning.", exception);
+            }
+
+            if (assert != null)
+            {
+                var assertions = assert(this);
+
+                if (options.SnapshotFlags.HasFlag(SnapshotFlags.Assert))
+                {
+                    GenerateStep(edgeResults.Keys, serResults.Keys, parResults.Keys, knotResults.Keys, null);
+                }
+
+                if (assertions?.Any() == true)
+                {
+                    throw new AssertionFailedException(assertions.ToList());
                 }
             }
 
             return outputImagePaths;
         }
 
-        private void Step(object? highlight, TLabel? highlightLabel)
-        {
-            highlights?.Clear();
-
-            if (highlight != null)
-            {
-                highlights?.Add(highlight);
-            }
-            if (highlightLabel != null)
-            {
-                highlights?.Add(highlightLabel);
-            }
-
-            if (options.FitToLast)
-            {
-                SaveStep();
-            }
-            else
-            {
-                GenerateStep(highlights: highlights);
-            }
-        }
 
         public void LabelEdge(TGraph _, TNode fromNode, TEdge edge, TNode toNode, TLabel label)
         {
-            var pair = new NodePair<TEdge>(fromNode, edge, toNode);
-            edgeResults[pair] = label;
-            Step(pair, label);
+            var pair = new NodePair<TNode, TEdge>(fromNode, edge, toNode);
+            var key = MakeLabelKey(label, GroupKind.Edge, Enumerable.Empty<TLabel>());
+            edgeResults[pair] = key;
+            Step(pair, key);
         }
         
         public void LabelSeries(TGraph _, TNode startNode, TLabel sublabel, TNode endNode, TLabel label)
         {
-            var pair = new NodePair<TLabel>(startNode, sublabel, endNode);
-            serResults[pair] = label;
-
-            labelParents[sublabel] = label;
-
-            Step(pair, label);
+            var pair = new NodePair<TNode, UnorderedNTuple<TLabel>>(startNode, new UnorderedNTuple<TLabel>(sublabel), endNode);
+            var key = MakeLabelKey(label, GroupKind.Series, new[] { sublabel });
+            serResults[pair] = key;
+            Step(pair, key);
         }
-        
+
+        public void LabelSeries(TGraph _, TNode startNode, IEnumerable<TLabel> sublabels, TNode endNode, TLabel label)
+        {
+            var pair = new NodePair<TNode, UnorderedNTuple<TLabel>>(startNode, new UnorderedNTuple<TLabel>(sublabels), endNode);
+            var key = MakeLabelKey(label, GroupKind.Series, sublabels);
+            serResults[pair] = key;
+            Step(pair, key);
+        }
+
         public void LabelParallel(TGraph _, TNode startNode, IEnumerable<TLabel> sublabels, TNode endNode, TLabel label)
         {
-            var pair = new NodePair<UnorderedNTuple<TLabel>>(startNode, new UnorderedNTuple<TLabel>(sublabels), endNode);
-            parResults[pair] = label;
-
-            foreach (var sublabel in sublabels)
-            {
-                labelParents[sublabel] = label;
-            }
-
-            Step(pair, label);
+            var pair = new NodePair<TNode, UnorderedNTuple<TLabel>>(startNode, new UnorderedNTuple<TLabel>(sublabels), endNode);
+            var key = MakeLabelKey(label, GroupKind.Parallel, sublabels);
+            parResults[pair] = key;
+            Step(pair, key);
         }
+
         public void LabelKnot(TGraph _, TNode startNode, IEnumerable<TLabel> sublabels, TNode endNode, TLabel label)
         {
-            var pair = new NodePair<UnorderedNTuple<TLabel>>(startNode, new UnorderedNTuple<TLabel>(sublabels), endNode);
-            knotResults.Add(pair, label);
+            var pair = new NodePair<TNode, UnorderedNTuple<TLabel>>(startNode, new UnorderedNTuple<TLabel>(sublabels), endNode);
+            var key = MakeLabelKey(label, GroupKind.Knot, sublabels);
+            knotResults[pair] = key;
+            Step(pair, key);
+        }
 
-            foreach (var sublabel in sublabels)
+        private LabelKey MakeLabelKey(TLabel label, GroupKind kind, IEnumerable<TLabel> sublabels)
+        {
+            var id = labelKeyCounter++;
+            var key = new LabelKey(label, id, kind);
+
+            IEnumerable<LabelKey> ResolveSub(TLabel sublabel)
             {
-                labelParents[sublabel] = label;
+                if (!topLabels.TryGetValue(sublabel, out var list))
+                {
+                    topLabels[sublabel] = list = new List<LabelKey> { new LabelKey(sublabel, labelKeyCounter++, GroupKind.Unknown) };
+                }
+                return list;
             }
 
-            Step(pair, label);
+            foreach (var sublabelKey in sublabels.SelectMany(ResolveSub))
+            {
+                labelParents[sublabelKey] = key;
+            }
+
+            if (!topLabels.TryGetValue(label, out var list))
+            {
+                topLabels[label] = list = new List<LabelKey>();
+            }
+
+            if (kind == GroupKind.Series)
+            {
+                list.Clear();
+            }
+
+            list.Add(key);
+
+            return key;
         }
     }
 }

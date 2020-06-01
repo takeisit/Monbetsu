@@ -2,7 +2,7 @@
 // https://github.com/takeisit/Monbetsu/
 // SPDX-License-Identifier: MIT
 
-// ver 0.5.0
+// ver 0.5.1
 
 using System;
 using System.Collections;
@@ -49,6 +49,80 @@ namespace Monbetsu
             where TLabel : notnull
         {
             MonbetsuClassifier<TNode, TEdge, TLabel>.Classify(startNodes, getOutflows, createLabelFromEdge, createLabelFromSubgraph, labelEdge, labelSeries, labelParallel, labelKnot, cancellationToken);
+        }
+
+        public static partial class Integratedly
+        {
+            public static void Classify<TGraph, TNode, TEdge, TLabel>(TGraph graph, IEnumerable<TNode> startNodes, IGraphStructure<TGraph, TNode, TEdge> graphStructure, ILabelFactory<TGraph, TNode, TEdge, TLabel> labelFactoy, ILabeler<TGraph, TNode, TEdge, TLabel> labeler, CancellationToken cancellationToken = default)
+                where TGraph : notnull
+                where TNode : notnull
+                where TEdge : notnull
+                where TLabel : notnull
+            {
+                MonbetsuClassifier<TGraph, TNode, TEdge, TLabel>.ClassifyIntegratedly(graph, startNodes, graphStructure, labelFactoy, labeler, cancellationToken);
+            }
+
+            public static void Classify<TGraph, TNode, TEdge, TLabel>(TGraph graph, IEnumerable<TNode> startNodes, FlowEnumerator<TGraph, TNode, TEdge> getOutflows, EdgeLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromEdge, SubgraphLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromSubgraph, EdgeLabeler<TGraph, TNode, TEdge, TLabel>? labelEdge, SeriesSubgraphLabeler<TGraph, TNode, TLabel>? labelSeries, ParallelSubgraphLabeler<TGraph, TNode, TLabel>? labelParallel, KnotSubgraphLabeler<TGraph, TNode, TLabel>? labelKnot, CancellationToken cancellationToken = default)
+                where TGraph : notnull
+                where TNode : notnull
+                where TEdge : notnull
+                where TLabel : notnull
+            {
+                MonbetsuClassifier<TGraph, TNode, TEdge, TLabel>.ClassifyIntegratedly(graph, startNodes, getOutflows, createLabelFromEdge, createLabelFromSubgraph, labelEdge, labelSeries, labelParallel, labelKnot, cancellationToken);
+            }
+
+            public static void Classify<TNode, TEdge, TLabel>(IEnumerable<TNode> startNodes, IGraphStructure<TNode, TEdge> graphStructure, ILabelFactory<TNode, TEdge, TLabel> labelFactoy, ILabeler<TNode, TEdge, TLabel> labeler, CancellationToken cancellationToken = default)
+                where TNode : notnull
+                where TEdge : notnull
+                where TLabel : notnull
+            {
+                MonbetsuClassifier<TNode, TEdge, TLabel>.ClassifyIntegratedly(startNodes, graphStructure, labelFactoy, labeler, cancellationToken);
+            }
+
+            public static void Classify<TNode, TEdge, TLabel>(IEnumerable<TNode> startNodes, FlowEnumerator<TNode, TEdge> getOutflows, EdgeLabelCreator<TNode, TEdge, TLabel> createLabelFromEdge, SubgraphLabelCreator<TNode, TEdge, TLabel> createLabelFromSubgraph, EdgeLabeler<TNode, TEdge, TLabel>? labelEdge, SeriesSubgraphLabeler<TNode, TLabel>? labelSeries, ParallelSubgraphLabeler<TNode, TLabel>? labelParallel, KnotSubgraphLabeler<TNode, TLabel>? labelKnot, CancellationToken cancellationToken = default)
+                where TNode : notnull
+                where TEdge : notnull
+                where TLabel : notnull
+            {
+                MonbetsuClassifier<TNode, TEdge, TLabel>.ClassifyIntegratedly(startNodes, getOutflows, createLabelFromEdge, createLabelFromSubgraph, labelEdge, labelSeries, labelParallel, labelKnot, cancellationToken);
+            }
+        }
+
+        public static partial class Uniquely
+        {
+            public static void Classify<TGraph, TNode, TEdge, TLabel>(TGraph graph, IEnumerable<TNode> startNodes, IGraphStructure<TGraph, TNode, TEdge> graphStructure, ILabelFactory<TGraph, TNode, TEdge, TLabel> labelFactoy, IUniquelyLabeler<TGraph, TNode, TEdge, TLabel> labeler, CancellationToken cancellationToken = default)
+                where TGraph : notnull
+                where TNode : notnull
+                where TEdge : notnull
+                where TLabel : notnull
+            {
+                MonbetsuClassifier<TGraph, TNode, TEdge, TLabel>.ClassifyUniquely(graph, startNodes, graphStructure, labelFactoy, labeler, cancellationToken);
+            }
+
+            public static void Classify<TGraph, TNode, TEdge, TLabel>(TGraph graph, IEnumerable<TNode> startNodes, FlowEnumerator<TGraph, TNode, TEdge> getOutflows, EdgeLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromEdge, SubgraphLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromSubgraph, EdgeLabeler<TGraph, TNode, TEdge, TLabel>? labelEdge, UniquelySeriesSubgraphLabeler<TGraph, TNode, TLabel>? labelSeries, ParallelSubgraphLabeler<TGraph, TNode, TLabel>? labelParallel, KnotSubgraphLabeler<TGraph, TNode, TLabel>? labelKnot, CancellationToken cancellationToken = default)
+                where TGraph : notnull
+                where TNode : notnull
+                where TEdge : notnull
+                where TLabel : notnull
+            {
+                MonbetsuClassifier<TGraph, TNode, TEdge, TLabel>.ClassifyUniquely(graph, startNodes, getOutflows, createLabelFromEdge, createLabelFromSubgraph, labelEdge, labelSeries, labelParallel, labelKnot, cancellationToken);
+            }
+
+            public static void Classify<TNode, TEdge, TLabel>(IEnumerable<TNode> startNodes, IGraphStructure<TNode, TEdge> graphStructure, ILabelFactory<TNode, TEdge, TLabel> labelFactoy, IUniquelyLabeler<TNode, TEdge, TLabel> labeler, CancellationToken cancellationToken = default)
+                where TNode : notnull
+                where TEdge : notnull
+                where TLabel : notnull
+            {
+                MonbetsuClassifier<TNode, TEdge, TLabel>.ClassifyUniquely(startNodes, graphStructure, labelFactoy, labeler, cancellationToken);
+            }
+
+            public static void Classify<TNode, TEdge, TLabel>(IEnumerable<TNode> startNodes, FlowEnumerator<TNode, TEdge> getOutflows, EdgeLabelCreator<TNode, TEdge, TLabel> createLabelFromEdge, SubgraphLabelCreator<TNode, TEdge, TLabel> createLabelFromSubgraph, EdgeLabeler<TNode, TEdge, TLabel>? labelEdge, UniquelySeriesSubgraphLabeler<TNode, TLabel>? labelSeries, ParallelSubgraphLabeler<TNode, TLabel>? labelParallel, KnotSubgraphLabeler<TNode, TLabel>? labelKnot, CancellationToken cancellationToken = default)
+                where TNode : notnull
+                where TEdge : notnull
+                where TLabel : notnull
+            {
+                MonbetsuClassifier<TNode, TEdge, TLabel>.ClassifyUniquely(startNodes, getOutflows, createLabelFromEdge, createLabelFromSubgraph, labelEdge, labelSeries, labelParallel, labelKnot, cancellationToken);
+            }
         }
     }
 
@@ -110,6 +184,29 @@ namespace Monbetsu
         void LabelKnotSubgraph(TNode startNode, IEnumerable<TLabel> sublebels, TNode endNode, TLabel label);
     }
 
+    public interface IUniquelyLabeler<TGraph, TNode, TEdge, TLabel>
+        where TGraph : notnull
+        where TNode : notnull
+        where TEdge : notnull
+        where TLabel : notnull
+    {
+        void LabelEdge(TGraph graph, TNode fromNode, TEdge edge, TNode toNode, TLabel label);
+        void LabelSeriesSubgraph(TGraph graph, TNode startNode, IEnumerable<TLabel> sublebels, TNode endNode, TLabel label);
+        void LabelParallelSubgraph(TGraph graph, TNode startNode, IEnumerable<TLabel> sublebels, TNode endNode, TLabel label);
+        void LabelKnotSubgraph(TGraph graph, TNode startNode, IEnumerable<TLabel> sublebels, TNode endNode, TLabel label);
+    }
+
+    public interface IUniquelyLabeler<TNode, TEdge, TLabel>
+        where TNode : notnull
+        where TEdge : notnull
+        where TLabel : notnull
+    {
+        void LabelEdge(TNode fromNode, TEdge edge, TNode toNode, TLabel label);
+        void LabelSeriesSubgraph(TNode startNode, IEnumerable<TLabel> sublebels, TNode endNode, TLabel label);
+        void LabelParallelSubgraph(TNode startNode, IEnumerable<TLabel> sublebels, TNode endNode, TLabel label);
+        void LabelKnotSubgraph(TNode startNode, IEnumerable<TLabel> sublebels, TNode endNode, TLabel label);
+    }
+
     public delegate void EdgeLabeler<TGraph, TNode, TEdge, TLabel>(TGraph graph, TNode fromNode, TEdge edge, TNode toNode, TLabel label)
         where TGraph : notnull
         where TNode : notnull
@@ -130,6 +227,15 @@ namespace Monbetsu
         where TNode : notnull
         where TLabel : notnull;
 
+    public delegate void UniquelySeriesSubgraphLabeler<TGraph, TNode, TLabel>(TGraph graph, TNode startNode, IEnumerable<TLabel> sublebels, TNode endNode, TLabel label)
+        where TGraph : notnull
+        where TNode : notnull
+        where TLabel : notnull;
+
+    public delegate void UniquelySeriesSubgraphLabeler<TNode, TLabel>(TNode startNode, IEnumerable<TLabel> sublebels, TNode endNode, TLabel label)
+        where TNode : notnull
+        where TLabel : notnull;
+
     public delegate void ParallelSubgraphLabeler<TGraph, TNode, TLabel>(TGraph graph, TNode startNode, IEnumerable<TLabel> sublebels, TNode endNode, TLabel label)
         where TGraph : notnull
         where TNode : notnull
@@ -147,6 +253,16 @@ namespace Monbetsu
     public delegate void KnotSubgraphLabeler<TNode, TLabel>(TNode startNode, IEnumerable<TLabel> sublebels, TNode endNode, TLabel label)
         where TNode : notnull
         where TLabel : notnull;
+
+    //public delegate void SubgraphLabeler<TGraph, TNode, TLabel>(TGraph graph, SubgraphKind subgraphKind, TNode startNode, IEnumerable<TLabel> sublebels, TNode endNode, TLabel label)
+    //    where TGraph : notnull
+    //    where TNode : notnull
+    //    where TLabel : notnull;
+
+    //public delegate void SubgraphLabeler<TNode, TLabel>(SubgraphKind subgraphKind, TNode startNode, IEnumerable<TLabel> sublebels, TNode endNode, TLabel label)
+    //    where TNode : notnull
+    //    where TLabel : notnull;
+
 
     public delegate IEnumerable<(TEdge, TNode)> FlowEnumerator<TGraph, TNode, TEdge>(TGraph graph, TNode node)
         where TGraph : notnull
@@ -179,6 +295,14 @@ namespace Monbetsu
         where TEdge : notnull
         where TLabel : notnull;
 
+    //public enum SubgraphKind
+    //{
+    //    Edge,
+    //    Series,
+    //    Parallel,
+    //    Knot
+    //}
+
     public abstract partial class MonbetsuClassifier<TGraph, TNode, TEdge, TLabel>
         where TGraph : notnull
         where TNode : notnull
@@ -205,9 +329,59 @@ namespace Monbetsu
 
         public static void Classify(TGraph graph, IEnumerable<TNode> startNodes, FlowEnumerator<TGraph, TNode, TEdge> getOutflows, EdgeLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromEdge, SubgraphLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromSubgraph, EdgeLabeler<TGraph, TNode, TEdge, TLabel>? labelEdge, SeriesSubgraphLabeler<TGraph, TNode, TLabel>? labelSeries, ParallelSubgraphLabeler<TGraph, TNode, TLabel>? labelParallel, KnotSubgraphLabeler<TGraph, TNode, TLabel>? labelKnot, CancellationToken cancellationToken = default)
         {
+            var labeler = new DefaultLabeler(graph, createLabelFromEdge, createLabelFromSubgraph, labelEdge, labelSeries, labelParallel, labelKnot);
+
+            Classify(graph, startNodes, getOutflows, labeler, cancellationToken);
+        }
+
+        public void ClassifyIntegratedly(TGraph graph, IEnumerable<TNode> startNodes, ILabelFactory<TGraph, TNode, TEdge, TLabel> labelFactory, ILabeler<TGraph, TNode, TEdge, TLabel> labeler, CancellationToken cancellationToken = default)
+        {
+            ClassifyIntegratedly(graph, startNodes, GetOutflows, labelFactory.CreateFromEdge, labelFactory.CreateFromSubgraph, labeler.LabelEdge, labeler.LabelSeriesSubgraph, labeler.LabelParallelSubgraph, labeler.LabelKnotSubgraph, cancellationToken);
+        }
+
+        public void ClassifyIntegratedly(TGraph graph, IEnumerable<TNode> startNodes, EdgeLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromEdge, SubgraphLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromSubgraph, EdgeLabeler<TGraph, TNode, TEdge, TLabel>? labelEdge, SeriesSubgraphLabeler<TGraph, TNode, TLabel>? labelSeries, ParallelSubgraphLabeler<TGraph, TNode, TLabel>? labelParallel, KnotSubgraphLabeler<TGraph, TNode, TLabel>? labelKnot, CancellationToken cancellationToken = default)
+        {
+            ClassifyIntegratedly(graph, startNodes, GetOutflows, createLabelFromEdge, createLabelFromSubgraph, labelEdge, labelSeries, labelParallel, labelKnot, cancellationToken);
+        }
+
+        public static void ClassifyIntegratedly(TGraph graph, IEnumerable<TNode> startNodes, IGraphStructure<TGraph, TNode, TEdge> graphStructure, ILabelFactory<TGraph, TNode, TEdge, TLabel> labelFactoy, ILabeler<TGraph, TNode, TEdge, TLabel> labeler, CancellationToken cancellationToken = default)
+        {
+            ClassifyIntegratedly(graph, startNodes, graphStructure.GetOutFlows, labelFactoy.CreateFromEdge, labelFactoy.CreateFromSubgraph, labeler.LabelEdge, labeler.LabelSeriesSubgraph, labeler.LabelParallelSubgraph, labeler.LabelKnotSubgraph, cancellationToken);
+        }
+
+        public static void ClassifyIntegratedly(TGraph graph, IEnumerable<TNode> startNodes, FlowEnumerator<TGraph, TNode, TEdge> getOutflows, EdgeLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromEdge, SubgraphLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromSubgraph, EdgeLabeler<TGraph, TNode, TEdge, TLabel>? labelEdge, SeriesSubgraphLabeler<TGraph, TNode, TLabel>? labelSeries, ParallelSubgraphLabeler<TGraph, TNode, TLabel>? labelParallel, KnotSubgraphLabeler<TGraph, TNode, TLabel>? labelKnot, CancellationToken cancellationToken = default)
+        {
+            var labeler = new IntegratedlyLabeler(graph, createLabelFromEdge, createLabelFromSubgraph, labelEdge, labelSeries, labelParallel, labelKnot);
+
+            Classify(graph, startNodes, getOutflows, labeler, cancellationToken);
+        }
+
+        public void ClassifyUniquely(TGraph graph, IEnumerable<TNode> startNodes, ILabelFactory<TGraph, TNode, TEdge, TLabel> labelFactory, IUniquelyLabeler<TGraph, TNode, TEdge, TLabel> labeler, CancellationToken cancellationToken = default)
+        {
+            ClassifyUniquely(graph, startNodes, GetOutflows, labelFactory.CreateFromEdge, labelFactory.CreateFromSubgraph, labeler.LabelEdge, labeler.LabelSeriesSubgraph, labeler.LabelParallelSubgraph, labeler.LabelKnotSubgraph, cancellationToken);
+        }
+
+        public void ClassifyUniquely(TGraph graph, IEnumerable<TNode> startNodes, EdgeLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromEdge, SubgraphLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromSubgraph, EdgeLabeler<TGraph, TNode, TEdge, TLabel>? labelEdge, UniquelySeriesSubgraphLabeler<TGraph, TNode, TLabel>? labelSeries, ParallelSubgraphLabeler<TGraph, TNode, TLabel>? labelParallel, KnotSubgraphLabeler<TGraph, TNode, TLabel>? labelKnot, CancellationToken cancellationToken = default)
+        {
+            ClassifyUniquely(graph, startNodes, GetOutflows, createLabelFromEdge, createLabelFromSubgraph, labelEdge, labelSeries, labelParallel, labelKnot, cancellationToken);
+        }
+
+        public static void ClassifyUniquely(TGraph graph, IEnumerable<TNode> startNodes, IGraphStructure<TGraph, TNode, TEdge> graphStructure, ILabelFactory<TGraph, TNode, TEdge, TLabel> labelFactoy, IUniquelyLabeler<TGraph, TNode, TEdge, TLabel> labeler, CancellationToken cancellationToken = default)
+        {
+            ClassifyUniquely(graph, startNodes, graphStructure.GetOutFlows, labelFactoy.CreateFromEdge, labelFactoy.CreateFromSubgraph, labeler.LabelEdge, labeler.LabelSeriesSubgraph, labeler.LabelParallelSubgraph, labeler.LabelKnotSubgraph, cancellationToken);
+        }
+
+        public static void ClassifyUniquely(TGraph graph, IEnumerable<TNode> startNodes, FlowEnumerator<TGraph, TNode, TEdge> getOutflows, EdgeLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromEdge, SubgraphLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromSubgraph, EdgeLabeler<TGraph, TNode, TEdge, TLabel>? labelEdge, UniquelySeriesSubgraphLabeler<TGraph, TNode, TLabel>? labelSeries, ParallelSubgraphLabeler<TGraph, TNode, TLabel>? labelParallel, KnotSubgraphLabeler<TGraph, TNode, TLabel>? labelKnot, CancellationToken cancellationToken = default)
+        {
+            var labeler = new UniquelyLabeler(graph, createLabelFromEdge, createLabelFromSubgraph, labelEdge, labelSeries, labelParallel, labelKnot);
+
+            Classify(graph, startNodes, getOutflows, labeler, cancellationToken);
+        }
+
+        private static void Classify(TGraph graph, IEnumerable<TNode> startNodes, FlowEnumerator<TGraph, TNode, TEdge> getOutflows, ILabeler labeler, CancellationToken cancellationToken = default)
+        {
             try
             {
-                var labeler = new Labeler(graph, createLabelFromEdge, createLabelFromSubgraph, labelEdge, labelSeries, labelParallel, labelKnot);
                 var (list, maxParentCount) = BuildTopology(in graph, getOutflows, startNodes, cancellationToken);
                 var pool = new Pool(maxParentCount);
 
@@ -336,51 +510,51 @@ namespace Monbetsu
             return (list, maxParentCount);
         }
 
-        class Labeler
+        interface ILabeler
         {
-            private readonly TGraph graph;
-            private readonly EdgeLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromEdge;
-            private readonly SubgraphLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromSubgraph;
-            private readonly EdgeLabeler<TGraph, TNode, TEdge, TLabel> labelEdge;
-            private readonly SeriesSubgraphLabeler<TGraph, TNode, TLabel> labelSeries;
-            private readonly ParallelSubgraphLabeler<TGraph, TNode, TLabel> labelParallel;
-            private readonly KnotSubgraphLabeler<TGraph, TNode, TLabel> labelKnot;
+            IItemWithLabel LabelEdge(IItemWithLabel parent, Item child);
 
-            public Labeler(
+            (Item newParent, Item childOfNewParent, TLabel label) LabelSeries(IItemWithLabel itemWithLabel, Item end);
+
+            (Item newParent, TLabel label, bool isLabelInherited) LabelParallel(Item parent, IEnumerable<TLabel> sublabels, Item child, bool isLabelInheritable);
+
+            (Item newParent, TLabel label, bool isLabelInherited) LabelKnot(Item parent, IEnumerable<TLabel> sublabels, Item child, bool isLabelInheritable);
+        }
+
+        abstract class LabelerBase : ILabeler
+        {
+            protected TGraph Graph { get; }
+            protected EdgeLabelCreator<TGraph, TNode, TEdge, TLabel> CreateLabelFromEdge { get; }
+            protected SubgraphLabelCreator<TGraph, TNode, TEdge, TLabel> CreateLabelFromSubgraph { get; }
+            protected EdgeLabeler<TGraph, TNode, TEdge, TLabel> LabelEdgeCallback { get; }
+            protected ParallelSubgraphLabeler<TGraph, TNode, TLabel> LabelParallelCallback { get; }
+            protected KnotSubgraphLabeler<TGraph, TNode, TLabel> LabelKnotCallback { get; }
+
+            protected LabelerBase(
                 TGraph graph,
                 EdgeLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromEdge,
                 SubgraphLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromSubgraph,
                 EdgeLabeler<TGraph, TNode, TEdge, TLabel>? labelEdge,
-                SeriesSubgraphLabeler<TGraph, TNode, TLabel>? labelSeries, 
-                ParallelSubgraphLabeler<TGraph, TNode, TLabel>? labelParallel, 
+                ParallelSubgraphLabeler<TGraph, TNode, TLabel>? labelParallel,
                 KnotSubgraphLabeler<TGraph, TNode, TLabel>? labelKnot)
             {
-                this.graph = graph;
-                this.createLabelFromEdge = createLabelFromEdge ?? throw new ArgumentNullException(nameof(createLabelFromEdge));
-                this.createLabelFromSubgraph = createLabelFromSubgraph ?? throw new ArgumentNullException(nameof(createLabelFromSubgraph));
-                this.labelEdge = labelEdge ?? ((_0, _1, _2, _3, _4) => { });
-                this.labelSeries = labelSeries ?? ((_0, _1, _2, _3, _4) => { });
-                this.labelParallel = labelParallel ?? ((_0, _1, _2, _3, _4) => { });
-                this.labelKnot = labelKnot ?? ((_0, _1, _2, _3, _4) => { });
+                Graph = graph;
+                CreateLabelFromEdge = createLabelFromEdge ?? throw new ArgumentNullException(nameof(createLabelFromEdge));
+                CreateLabelFromSubgraph = createLabelFromSubgraph ?? throw new ArgumentNullException(nameof(createLabelFromSubgraph));
+                LabelEdgeCallback = labelEdge ?? ((_0, _1, _2, _3, _4) => { });
+                LabelParallelCallback = labelParallel ?? ((_0, _1, _2, _3, _4) => { });
+                LabelKnotCallback = labelKnot ?? ((_0, _1, _2, _3, _4) => { });
             }
 
-            internal IItemWithLabel LabelEdge(IItemWithLabel parent, Item child)
+            public IItemWithLabel LabelEdge(IItemWithLabel parent, Item child)
             {
                 if (parent is ItemWithEdge rawEdgeContainer)
                 {
                     var edge = rawEdgeContainer.Edge;
 
-                    TLabel label;
-                    if (parent.Item.IsSerial)
-                    {
-                        label = parent.Item.Parents[0].Label;
-                    }
-                    else
-                    {
-                        label = createLabelFromEdge(graph, parent.Item.Node, edge, child.Node);
-                    }
+                    var (label, _) = CreateEdgeLabelCore(parent.Item, edge, child, parent.Item.Children.Count == 1);
                     var newParent = new ItemWithLabel(parent.Item, label);
-                    labelEdge(graph, parent.Item.Node, edge, child.Node, label);
+                    LabelEdgeCallback(Graph, parent.Item.Node, edge, child.Node, label);
                     return newParent;
                 }
                 else
@@ -389,43 +563,160 @@ namespace Monbetsu
                 }
             }
 
-            internal (Item newParent, TLabel label) LabelSeries(Item start, TLabel sublabel, Item end)
-            {
-                var label = createLabelFromSubgraph(graph, start.Node, end.Node);
-                labelSeries(graph, start.Node, sublabel, end.Node, label);
-
-                return (start, label);
-            }
-
-            private (TLabel label, bool isLabelInherited) LabelSeriesCapable(Item parent, Item child, bool isLabelInheritable)
-            {
-                TLabel label;
-                var isLabelInherited = false;
-                if (parent.Parents.Count == 1 && isLabelInheritable)
+            protected virtual (TLabel label, bool isLabelInherited) CreateEdgeLabelCore(Item parent, TEdge edge, Item child, bool isLabelInheritable)
+            {                
+                if (isLabelInheritable && parent.Parents.Count == 1)
                 {
-                    label = parent.Parents[0].Label;
-                    isLabelInherited = true;
+                    return (parent.Parents[0].Label, true);
                 }
                 else
                 {
-                    label = createLabelFromSubgraph(graph, parent.Node, child.Node);
+                    return (CreateLabelFromEdge(Graph, parent.Node, edge, child.Node), false);
                 }
-
-                return (label, isLabelInherited);
             }
 
-            internal (Item newParent, TLabel label, bool isLabelInherited) LabelParallel(Item parent, IEnumerable<TLabel> sublabels, Item child, bool isLabelInheritable)
+
+            protected virtual (TLabel label, bool isLabelInherited) CreateSubgraphLabelCore(Item parent, Item child, bool isLabelInheritable)
             {
-                var (label, isLabelInherited) = LabelSeriesCapable(parent, child, isLabelInheritable);
-                labelParallel(graph, parent.Node, sublabels, child.Node, label);
+                if (isLabelInheritable && parent.Parents.Count == 1)
+                {
+                    return (parent.Parents[0].Label, true);
+                }
+                else
+                {
+                    return (CreateLabelFromSubgraph(Graph, parent.Node, child.Node), false);
+                }
+            }
+
+            public abstract (Item newParent, Item childOfNewParent, TLabel label) LabelSeries(IItemWithLabel itemWithLabel, Item end);
+
+            
+            public (Item newParent, TLabel label, bool isLabelInherited) LabelParallel(Item parent, IEnumerable<TLabel> sublabels, Item child, bool isLabelInheritable)
+            {
+                var (label, isLabelInherited) = CreateSubgraphLabelCore(parent, child, isLabelInheritable);
+                LabelParallelCallback(Graph, parent.Node, sublabels, child.Node, label);
                 return (parent, label, isLabelInherited);
             }
 
-            internal (Item newParent, TLabel label, bool isLabelInherited) LabelKnot(Item parent, IEnumerable<TLabel> sublabels, Item child, bool isLabelInheritable)
+            public (Item newParent, TLabel label, bool isLabelInherited) LabelKnot(Item parent, IEnumerable<TLabel> sublabels, Item child, bool isLabelInheritable)
             {
-                var (label, isLabelInherited) = LabelSeriesCapable(parent, child, isLabelInheritable);
-                labelKnot(graph, parent.Node, sublabels, child.Node, label);
+                var (label, isLabelInherited) = CreateSubgraphLabelCore(parent, child, isLabelInheritable);
+                LabelKnotCallback(Graph, parent.Node, sublabels, child.Node, label);
                 return (parent, label, isLabelInherited);
+            }
+        }
+
+        class DefaultLabeler : LabelerBase
+        {
+            private readonly SeriesSubgraphLabeler<TGraph, TNode, TLabel> labelSeries;
+            
+            public DefaultLabeler(
+                TGraph graph,
+                EdgeLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromEdge,
+                SubgraphLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromSubgraph,
+                EdgeLabeler<TGraph, TNode, TEdge, TLabel>? labelEdge,
+                SeriesSubgraphLabeler<TGraph, TNode, TLabel>? labelSeries, 
+                ParallelSubgraphLabeler<TGraph, TNode, TLabel>? labelParallel, 
+                KnotSubgraphLabeler<TGraph, TNode, TLabel>? labelKnot)
+                : base(graph, createLabelFromEdge, createLabelFromSubgraph, labelEdge, labelParallel, labelKnot)
+            {
+                this.labelSeries = labelSeries ?? ((_0, _1, _2, _3, _4) => { });
+            }
+
+            public override (Item newParent, Item childOfNewParent, TLabel label) LabelSeries(IItemWithLabel itemWithLabel, Item end)
+            {
+                var start = itemWithLabel.Item;
+                Item pp;
+                do
+                {
+                    pp = start;
+                    start = start.Parents[0].Item;
+                } while (start.IsSerial);
+
+                var label = CreateLabelFromSubgraph(Graph, start.Node, end.Node);
+                labelSeries(Graph, start.Node, itemWithLabel.Label, end.Node, label);
+
+                return (start, pp, label);
+            }
+        }
+
+        class IntegratedlyLabeler : LabelerBase
+        {
+            private readonly SeriesSubgraphLabeler<TGraph, TNode, TLabel> labelSeries;
+
+            public IntegratedlyLabeler(
+                TGraph graph,
+                EdgeLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromEdge,
+                SubgraphLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromSubgraph,
+                EdgeLabeler<TGraph, TNode, TEdge, TLabel>? labelEdge,
+                SeriesSubgraphLabeler<TGraph, TNode, TLabel>? labelSeries,
+                ParallelSubgraphLabeler<TGraph, TNode, TLabel>? labelParallel,
+                KnotSubgraphLabeler<TGraph, TNode, TLabel>? labelKnot)
+                : base(graph, createLabelFromEdge, createLabelFromSubgraph, labelEdge, labelParallel, labelKnot)
+            {
+                this.labelSeries = labelSeries ?? ((_0, _1, _2, _3, _4) => { });
+            }
+
+            public override (Item newParent, Item childOfNewParent, TLabel label) LabelSeries(IItemWithLabel itemWithLabel, Item end)
+            {
+                var start = itemWithLabel.Item;
+                Item pp;
+                do
+                {
+                    pp = start;
+                    start = start.Parents[0].Item;
+                } while (start.IsSerial);
+
+                labelSeries(Graph, start.Node, itemWithLabel.Label, end.Node, itemWithLabel.Label);
+                return (start, pp, itemWithLabel.Label);
+            }
+        }
+
+        class UniquelyLabeler : LabelerBase
+        {
+            private readonly UniquelySeriesSubgraphLabeler<TGraph, TNode, TLabel> labelSeries;
+
+            public UniquelyLabeler(
+                TGraph graph,
+                EdgeLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromEdge,
+                SubgraphLabelCreator<TGraph, TNode, TEdge, TLabel> createLabelFromSubgraph,
+                EdgeLabeler<TGraph, TNode, TEdge, TLabel>? labelEdge,
+                UniquelySeriesSubgraphLabeler<TGraph, TNode, TLabel>? labelSeries,
+                ParallelSubgraphLabeler<TGraph, TNode, TLabel>? labelParallel,
+                KnotSubgraphLabeler<TGraph, TNode, TLabel>? labelKnot)
+                : base(graph, createLabelFromEdge, createLabelFromSubgraph, labelEdge, labelParallel, labelKnot)
+            {
+                this.labelSeries = labelSeries ?? ((_0, _1, _2, _3, _4) => { });
+            }
+
+            protected override (TLabel label, bool isLabelInherited) CreateEdgeLabelCore(Item parent, TEdge edge, Item child, bool isLabelInheritable)
+            {
+                return (CreateLabelFromEdge(Graph, parent.Node, edge, child.Node), false);
+            }
+
+            protected override (TLabel label, bool isLabelInherited) CreateSubgraphLabelCore(Item parent, Item child, bool isLabelInheritable)
+            {
+                return (CreateLabelFromSubgraph(Graph, parent.Node, child.Node), false);
+            }
+
+            public override (Item newParent, Item childOfNewParent, TLabel label) LabelSeries(IItemWithLabel itemWithLabel, Item end)
+            {
+                var start = itemWithLabel;
+                var sublabels = new List<TLabel>();
+                Item pp;
+                do
+                {
+                    sublabels.Add(start.Label);
+                    pp = start.Item;
+                    start = start.Item.Parents[0];
+                } while (start.Item.IsSerial);
+
+                sublabels.Add(start.Label);
+
+                var label = CreateLabelFromSubgraph(Graph, start.Item.Node, end.Node);
+                labelSeries(Graph, start.Item.Node, sublabels, end.Node, label);
+
+                return (start.Item, pp, label);
             }
         }
 
@@ -526,7 +817,7 @@ namespace Monbetsu
 #if MONBETSU_DEBUG_DUMP
             internal string Dump()
             {
-                string J(IEnumerable<MonbetsuClassifier<TGraph, TNode, TEdge, TLabel>.Item> source)
+                static string J(IEnumerable<MonbetsuClassifier<TGraph, TNode, TEdge, TLabel>.Item> source)
                 {
                     if (!typeof(IComparable<TNode>).IsAssignableFrom(typeof(TNode)))
                     {
@@ -679,7 +970,7 @@ namespace Monbetsu
                 return CheckpointLevel.None;
             }
 
-            internal void LabelEdges(Labeler labeler)
+            internal void LabelEdges(ILabeler labeler)
             {
                 for (var p = 0; p < Parents.Count; p++)
                 {
@@ -687,7 +978,7 @@ namespace Monbetsu
                 }
             }
 
-            internal bool SettleSeries(Labeler labeler)
+            internal bool SettleSeries(ILabeler labeler)
             {
                 var isModified = false;
 
@@ -704,19 +995,23 @@ namespace Monbetsu
                 return isModified;
             }
 
-            private IItemWithLabel SettleSeries(Labeler labeler, int parentIndex)
+            private IItemWithLabel SettleSeries(ILabeler labeler, int parentIndex)
             {
-                var p = Parents[parentIndex].Item;
-                Item pp;
-                do
-                {
-                    pp = p;
-                    p = p.Parents[0].Item;
-                } while (p.IsSerial);
+                //var p = Parents[parentIndex].Item;
+                //Item pp;
+                //do
+                //{
+                //    pp = p;
+                //    p = p.Parents[0].Item;
+                //} while (p.IsSerial);
 
-                var (newParent, label) = labeler.LabelSeries(p, Parents[parentIndex].Label, this);
+                //var (newParent, label) = labeler.LabelSeries(p, Parents[parentIndex].Label, this);
+                //Parents[parentIndex].Update(newParent, label);
+                //p.Children[p.Children.IndexOf(pp)] = this;
+
+                var (newParent, childOfNewParent, label) = labeler.LabelSeries(Parents[parentIndex], this);
                 Parents[parentIndex].Update(newParent, label);
-                p.Children[p.Children.IndexOf(pp)] = this;
+                newParent.Children[newParent.Children.IndexOf(childOfNewParent)] = this;
 
                 return Parents[parentIndex];
             }
@@ -784,7 +1079,7 @@ namespace Monbetsu
                 }
             }
 
-            internal bool TryMerge(Labeler labeler, Pool pool)
+            internal bool TryMerge(ILabeler labeler, Pool pool)
             {
                 var isModified = false;
                 
@@ -1025,7 +1320,6 @@ namespace Monbetsu
                 _ => (_, f, s, t, l) => labelEdge(f, s, t, l)
             };
 
-
             SeriesSubgraphLabeler<Unit, TNode, TLabel> series = labelSeries switch
             {
                 null => (_, f, s, t, l) => { },
@@ -1045,6 +1339,112 @@ namespace Monbetsu
             };
 
             MonbetsuClassifier<Unit, TNode, TEdge, TLabel>.Classify(default, startNodes,
+                (_, n) => getOutflows(n),
+                (_, f, e, t) => createLabelFromEdge(f, e, t),
+                (_, s, e) => createLabelFromSubgraph(s, e),
+                edge,
+                series,
+                parallel,
+                knot,
+                cancellationToken
+                );
+        }
+
+        public void ClassifyIntegratedly(IEnumerable<TNode> startNodes, ILabelFactory<TNode, TEdge, TLabel> labelFactory, ILabeler<TNode, TEdge, TLabel> labeler, CancellationToken cancellationToken = default)
+        {
+            ClassifyIntegratedly(startNodes, GetOutflows, labelFactory.CreateFromEdge, labelFactory.CreateFromSubgraph, labeler.LabelEdge, labeler.LabelSeriesSubgraph, labeler.LabelParallelSubgraph, labeler.LabelKnotSubgraph, cancellationToken);
+        }
+
+        public void ClassifyIntegratedly(IEnumerable<TNode> startNodes, EdgeLabelCreator<TNode, TEdge, TLabel> createLabelFromEdge, SubgraphLabelCreator<TNode, TEdge, TLabel> createLabelFromSubgraph, EdgeLabeler<TNode, TEdge, TLabel>? labelEdge, SeriesSubgraphLabeler<TNode, TLabel>? labelSeries, ParallelSubgraphLabeler<TNode, TLabel>? labelParallel, KnotSubgraphLabeler<TNode, TLabel>? labelKnot, CancellationToken cancellationToken = default)
+        {
+            ClassifyIntegratedly(startNodes, GetOutflows, createLabelFromEdge, createLabelFromSubgraph, labelEdge, labelSeries, labelParallel, labelKnot, cancellationToken);
+        }
+
+        public static void ClassifyIntegratedly(IEnumerable<TNode> startNodes, IGraphStructure<TNode, TEdge> graphStructure, ILabelFactory<TNode, TEdge, TLabel> labelFactoy, ILabeler<TNode, TEdge, TLabel> labeler, CancellationToken cancellationToken = default)
+        {
+            ClassifyIntegratedly(startNodes, graphStructure.GetOutflows, labelFactoy.CreateFromEdge, labelFactoy.CreateFromSubgraph, labeler.LabelEdge, labeler.LabelSeriesSubgraph, labeler.LabelParallelSubgraph, labeler.LabelKnotSubgraph, cancellationToken);
+        }
+
+        public static void ClassifyIntegratedly(IEnumerable<TNode> startNodes, FlowEnumerator<TNode, TEdge> getOutflows, EdgeLabelCreator<TNode, TEdge, TLabel> createLabelFromEdge, SubgraphLabelCreator<TNode, TEdge, TLabel> createLabelFromSubgraph, EdgeLabeler<TNode, TEdge, TLabel>? labelEdge, SeriesSubgraphLabeler<TNode, TLabel>? labelSeries, ParallelSubgraphLabeler<TNode, TLabel>? labelParallel, KnotSubgraphLabeler<TNode, TLabel>? labelKnot, CancellationToken cancellationToken = default)
+        {
+            EdgeLabeler<Unit, TNode, TEdge, TLabel> edge = labelEdge switch
+            {
+                null => (_, f, s, t, l) => { },
+                _ => (_, f, s, t, l) => labelEdge(f, s, t, l)
+            };
+
+            SeriesSubgraphLabeler<Unit, TNode, TLabel> series = labelSeries switch
+            {
+                null => (_, f, s, t, l) => { },
+                _ => (_, f, s, t, l) => labelSeries(f, s, t, l)
+            };
+
+            ParallelSubgraphLabeler<Unit, TNode, TLabel> parallel = labelParallel switch
+            {
+                null => (_, f, s, t, l) => { },
+                _ => (_, f, s, t, l) => labelParallel(f, s, t, l)
+            };
+
+            KnotSubgraphLabeler<Unit, TNode, TLabel>? knot = labelKnot switch
+            {
+                null => (_, f, s, t, l) => { },
+                _ => (_, f, s, t, l) => labelKnot(f, s, t, l)
+            };
+
+            MonbetsuClassifier<Unit, TNode, TEdge, TLabel>.ClassifyIntegratedly(default, startNodes,
+                (_, n) => getOutflows(n),
+                (_, f, e, t) => createLabelFromEdge(f, e, t),
+                (_, s, e) => createLabelFromSubgraph(s, e),
+                edge,
+                series,
+                parallel,
+                knot,
+                cancellationToken
+                );
+        }
+
+        public void ClassifyUniquely(IEnumerable<TNode> startNodes, ILabelFactory<TNode, TEdge, TLabel> labelFactory, IUniquelyLabeler<TNode, TEdge, TLabel> labeler, CancellationToken cancellationToken = default)
+        {
+            ClassifyUniquely(startNodes, GetOutflows, labelFactory.CreateFromEdge, labelFactory.CreateFromSubgraph, labeler.LabelEdge, labeler.LabelSeriesSubgraph, labeler.LabelParallelSubgraph, labeler.LabelKnotSubgraph, cancellationToken);
+        }
+
+        public void ClassifyUniquely(IEnumerable<TNode> startNodes, EdgeLabelCreator<TNode, TEdge, TLabel> createLabelFromEdge, SubgraphLabelCreator<TNode, TEdge, TLabel> createLabelFromSubgraph, EdgeLabeler<TNode, TEdge, TLabel>? labelEdge, UniquelySeriesSubgraphLabeler<TNode, TLabel>? labelSeries, ParallelSubgraphLabeler<TNode, TLabel>? labelParallel, KnotSubgraphLabeler<TNode, TLabel>? labelKnot, CancellationToken cancellationToken = default)
+        {
+            ClassifyUniquely(startNodes, GetOutflows, createLabelFromEdge, createLabelFromSubgraph, labelEdge, labelSeries, labelParallel, labelKnot, cancellationToken);
+        }
+
+        public static void ClassifyUniquely(IEnumerable<TNode> startNodes, IGraphStructure<TNode, TEdge> graphStructure, ILabelFactory<TNode, TEdge, TLabel> labelFactoy, IUniquelyLabeler<TNode, TEdge, TLabel> labeler, CancellationToken cancellationToken = default)
+        {
+            ClassifyUniquely(startNodes, graphStructure.GetOutflows, labelFactoy.CreateFromEdge, labelFactoy.CreateFromSubgraph, labeler.LabelEdge, labeler.LabelSeriesSubgraph, labeler.LabelParallelSubgraph, labeler.LabelKnotSubgraph, cancellationToken);
+        }
+
+        public static void ClassifyUniquely(IEnumerable<TNode> startNodes, FlowEnumerator<TNode, TEdge> getOutflows, EdgeLabelCreator<TNode, TEdge, TLabel> createLabelFromEdge, SubgraphLabelCreator<TNode, TEdge, TLabel> createLabelFromSubgraph, EdgeLabeler<TNode, TEdge, TLabel>? labelEdge, UniquelySeriesSubgraphLabeler<TNode, TLabel>? labelSeries, ParallelSubgraphLabeler<TNode, TLabel>? labelParallel, KnotSubgraphLabeler<TNode, TLabel>? labelKnot, CancellationToken cancellationToken = default)
+        {
+            EdgeLabeler<Unit, TNode, TEdge, TLabel> edge = labelEdge switch
+            {
+                null => (_, f, s, t, l) => { },
+                _ => (_, f, s, t, l) => labelEdge(f, s, t, l)
+            };
+
+            UniquelySeriesSubgraphLabeler<Unit, TNode, TLabel> series = labelSeries switch
+            {
+                null => (_, f, s, t, l) => { },
+                _ => (_, f, s, t, l) => labelSeries(f, s, t, l)
+            };
+
+            ParallelSubgraphLabeler<Unit, TNode, TLabel> parallel = labelParallel switch
+            {
+                null => (_, f, s, t, l) => { },
+                _ => (_, f, s, t, l) => labelParallel(f, s, t, l)
+            };
+
+            KnotSubgraphLabeler<Unit, TNode, TLabel>? knot = labelKnot switch
+            {
+                null => (_, f, s, t, l) => { },
+                _ => (_, f, s, t, l) => labelKnot(f, s, t, l)
+            };
+
+            MonbetsuClassifier<Unit, TNode, TEdge, TLabel>.ClassifyUniquely(default, startNodes,
                 (_, n) => getOutflows(n),
                 (_, f, e, t) => createLabelFromEdge(f, e, t),
                 (_, s, e) => createLabelFromSubgraph(s, e),

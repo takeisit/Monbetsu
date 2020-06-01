@@ -4,10 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using NUnit.Framework;
+using Monbetsu.Test.Utils;
 
 namespace Monbetsu.Test
 {
-    public partial class Tests
+    public partial class Tests : Verifier
     {
 
 

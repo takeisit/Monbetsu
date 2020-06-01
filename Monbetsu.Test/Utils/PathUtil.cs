@@ -6,7 +6,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace Monbetsu.Test
+namespace Monbetsu.Test.Utils
 {
     class PathUtil
     {

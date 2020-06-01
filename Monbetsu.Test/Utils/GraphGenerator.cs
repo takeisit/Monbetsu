@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace Monbetsu.Test
+namespace Monbetsu.Test.Utils
 {
     public partial class GraphGenerator
     {

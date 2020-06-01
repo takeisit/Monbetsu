@@ -92,31 +92,79 @@ namespace Monbetsu.BlazorDemo.Models
         private Label CreateLabelFromSubgraph(string startNode, string endNode)
             => new Label(labelSeq++);
 
-        public void Classify(CancellationToken cancellationToken = default)
+        public void Classify(Variation variation = Variation.Default, CancellationToken cancellationToken = default)
         {
             labelSeq = 0;
             edgeResults.Clear();
             subgraphResults.Clear();
 
-            Classify(StartNodes,
-                CreateLabelFromEdge,
-                CreateLabelFromSubgraph,
-                (string fromNode, Edge edge, string toNode, Label label) =>
-                {
-                    edgeResults[edge] = label;
-                },
-                (string startNode, Label sublabel, string endNode, Label label) =>
-                {
-                    subgraphResults.Add(new LabeledSubgraph(startNode, new List<Label> { sublabel }, endNode, label, SubgraphKind.Series));
-                },
-                (string startNode, IEnumerable<Label> sublabels, string endNode, Label label) =>
-                {
-                    subgraphResults.Add(new LabeledSubgraph(startNode, sublabels.ToList(), endNode, label, SubgraphKind.Parallel));
-                },
-                (string startNode, IEnumerable<Label> sublabels, string endNode, Label label) =>
-                {
-                    subgraphResults.Add(new LabeledSubgraph(startNode, sublabels.ToList(), endNode, label, SubgraphKind.Knot));
-                }, cancellationToken);
+            switch(variation)
+            {
+                case Variation.Unique:
+                    ClassifyUniquely(StartNodes,
+                        CreateLabelFromEdge,
+                        CreateLabelFromSubgraph,
+                        (string fromNode, Edge edge, string toNode, Label label) =>
+                        {
+                            edgeResults[edge] = label;
+                        },
+                        (string startNode, IEnumerable<Label> sublabels, string endNode, Label label) =>
+                        {
+                            subgraphResults.Add(new LabeledSubgraph(startNode, sublabels.ToList(), endNode, label, SubgraphKind.Series));
+                        },
+                        (string startNode, IEnumerable<Label> sublabels, string endNode, Label label) =>
+                        {
+                            subgraphResults.Add(new LabeledSubgraph(startNode, sublabels.ToList(), endNode, label, SubgraphKind.Parallel));
+                        },
+                        (string startNode, IEnumerable<Label> sublabels, string endNode, Label label) =>
+                        {
+                            subgraphResults.Add(new LabeledSubgraph(startNode, sublabels.ToList(), endNode, label, SubgraphKind.Knot));
+                        }, cancellationToken);
+                    break;
+                case Variation.Integrated:
+                    ClassifyIntegratedly(StartNodes,
+                        CreateLabelFromEdge,
+                        CreateLabelFromSubgraph,
+                        (string fromNode, Edge edge, string toNode, Label label) =>
+                        {
+                            edgeResults[edge] = label;
+                        },
+                        (string startNode, Label sublabel, string endNode, Label label) =>
+                        {
+                            subgraphResults.Add(new LabeledSubgraph(startNode, new List<Label> { sublabel }, endNode, label, SubgraphKind.Series));
+                        },
+                        (string startNode, IEnumerable<Label> sublabels, string endNode, Label label) =>
+                        {
+                            subgraphResults.Add(new LabeledSubgraph(startNode, sublabels.ToList(), endNode, label, SubgraphKind.Parallel));
+                        },
+                        (string startNode, IEnumerable<Label> sublabels, string endNode, Label label) =>
+                        {
+                            subgraphResults.Add(new LabeledSubgraph(startNode, sublabels.ToList(), endNode, label, SubgraphKind.Knot));
+                        }, cancellationToken);
+                    break;
+                default:
+                    Classify(StartNodes,
+                        CreateLabelFromEdge,
+                        CreateLabelFromSubgraph,
+                        (string fromNode, Edge edge, string toNode, Label label) =>
+                        {
+                            edgeResults[edge] = label;
+                        },
+                        (string startNode, Label sublabel, string endNode, Label label) =>
+                        {
+                            subgraphResults.Add(new LabeledSubgraph(startNode, new List<Label> { sublabel }, endNode, label, SubgraphKind.Series));
+                        },
+                        (string startNode, IEnumerable<Label> sublabels, string endNode, Label label) =>
+                        {
+                            subgraphResults.Add(new LabeledSubgraph(startNode, sublabels.ToList(), endNode, label, SubgraphKind.Parallel));
+                        },
+                        (string startNode, IEnumerable<Label> sublabels, string endNode, Label label) =>
+                        {
+                            subgraphResults.Add(new LabeledSubgraph(startNode, sublabels.ToList(), endNode, label, SubgraphKind.Knot));
+                        }, cancellationToken);
+                    break;
+            }
+            
         }
     }
 
@@ -140,16 +188,23 @@ namespace Monbetsu.BlazorDemo.Models
         Knot
     }
 
+    public enum Variation
+    {
+        Default,
+        Unique,
+        Integrated
+    }
+
     public class Label
     {
-        public string Id { get; }
+        public int Id { get; }
 
         public Label(int id)
         {
-            Id = $"L{id}";
+            Id = id;
         }
 
-        public override string ToString() => Id;
+        public override string ToString() => $"L{Id}";
     }
 
     class LabeledSubgraph

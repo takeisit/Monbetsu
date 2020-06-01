@@ -2,12 +2,14 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>0.5.0</Version>
+    <Version>0.5.1</Version>
     <Company />
     <Authors>takeisit</Authors>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <Copyright>Copyright (c) takeisit. All Rights Reserved.</Copyright>
+    <Description>Monbetsu is a classifier for edges/subgraphs in a DAG.</Description>
+    <RepositoryUrl>https://github.com/takeisit/Monbetsu/</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>

@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using Monbetsu.Test.Utils;
 using NUnit.Framework;
 
 namespace Monbetsu.Test
@@ -57,6 +58,8 @@ namespace Monbetsu.Test
 
         public GroupKind Kind { get; set; }
 
+        public int Order { get; set; }
+
         public override string ToString()
         {
             if (BaseEdge != null)
@@ -80,14 +83,16 @@ namespace Monbetsu.Test
 
     class TestGraphEnvironment : Monbetsu.MonbetsuClassifier<Graph, Node, Edge, Label>, ITestGraphEnvironment
     {
+        private int labelOrderSeq;
+
         protected virtual Label CreateLabelFromEdge(Graph graph, Node fromNode, Edge edge, Node toNode)
         {
-            return new Label { BaseEdge = edge, Kind = GroupKind.Edge };
+            return new Label { BaseEdge = edge, Kind = GroupKind.Edge, Order = labelOrderSeq++ };
         }
 
         protected virtual Label CreateLabelFromSubgraph(Graph graph, Node fromNode, Node toNode)
         {
-            return new Label { BaseSubgraph = (fromNode, toNode) };
+            return new Label { BaseSubgraph = (fromNode, toNode), Order = labelOrderSeq++ };
         }
 
         protected override IEnumerable<(Edge edge, Node toNode)> GetOutflows(Graph graph, Node fromNode)
@@ -97,6 +102,16 @@ namespace Monbetsu.Test
         {
             Classify(graph, startNodes, GetOutflows, CreateLabelFromEdge, CreateLabelFromSubgraph, labelEdge, labelSeries, labelParallel, labelKnot, cancellationToken);
         }
+
+        public void ClassifyIntegratedly(Graph graph, IEnumerable<Node> startNodes, EdgeLabeler<Graph, Node, Edge, Label>? labelEdge, SeriesSubgraphLabeler<Graph, Node, Label>? labelSeries, ParallelSubgraphLabeler<Graph, Node, Label>? labelParallel, KnotSubgraphLabeler<Graph, Node, Label>? labelKnot, CancellationToken cancellationToken = default)
+        {
+            ClassifyIntegratedly(graph, startNodes, GetOutflows, CreateLabelFromEdge, CreateLabelFromSubgraph, labelEdge, labelSeries, labelParallel, labelKnot, cancellationToken);
+        }
+
+        public void ClassifyUniquely(Graph graph, IEnumerable<Node> startNodes, EdgeLabeler<Graph, Node, Edge, Label>? labelEdge, UniquelySeriesSubgraphLabeler<Graph, Node, Label>? labelSeries, ParallelSubgraphLabeler<Graph, Node, Label>? labelParallel, KnotSubgraphLabeler<Graph, Node, Label>? labelKnot, CancellationToken cancellationToken = default)
+        {
+            ClassifyUniquely(graph, startNodes, GetOutflows, CreateLabelFromEdge, CreateLabelFromSubgraph, labelEdge, labelSeries, labelParallel, labelKnot, cancellationToken);
+        }
     }
 
     class RecordGraphEnvironment : TestGraphEnvironment
@@ -104,18 +119,20 @@ namespace Monbetsu.Test
         private int labelCounter;
         protected override Label CreateLabelFromEdge(Graph graph, Node fromNode, Edge edge, Node toNode)
         {
-            return new RecordLabel { BaseEdge = edge, Kind = GroupKind.Edge, LabelText = $"L{labelCounter++}" };
+            return new RecordLabel { BaseEdge = edge, Kind = GroupKind.Edge, LabelText = $"L{labelCounter++}", Order = labelCounter };
         }
 
         protected override Label CreateLabelFromSubgraph(Graph graph, Node fromNode, Node toNode)
         {
-            return new RecordLabel { BaseSubgraph = (fromNode, toNode), LabelText = $"L{labelCounter++}" };
+            return new RecordLabel { BaseSubgraph = (fromNode, toNode), LabelText = $"L{labelCounter++}", Order = labelCounter };
         }
     }
 
     interface ITestGraphEnvironment
     {
         void Classify(Graph graph, IEnumerable<Node> startNodes, EdgeLabeler<Graph, Node, Edge, Label>? labelEdge, SeriesSubgraphLabeler<Graph, Node, Label>? labelSeries, ParallelSubgraphLabeler<Graph, Node, Label>? labelParallel, KnotSubgraphLabeler<Graph, Node, Label>? labelKnot, CancellationToken cancellationToken = default);
+        void ClassifyIntegratedly(Graph graph, IEnumerable<Node> startNodes, EdgeLabeler<Graph, Node, Edge, Label>? labelEdge, SeriesSubgraphLabeler<Graph, Node, Label>? labelSeries, ParallelSubgraphLabeler<Graph, Node, Label>? labelParallel, KnotSubgraphLabeler<Graph, Node, Label>? labelKnot, CancellationToken cancellationToken = default);
+        void ClassifyUniquely(Graph graph, IEnumerable<Node> startNodes, EdgeLabeler<Graph, Node, Edge, Label>? labelEdge, UniquelySeriesSubgraphLabeler<Graph, Node, Label>? labelSeries, ParallelSubgraphLabeler<Graph, Node, Label>? labelParallel, KnotSubgraphLabeler<Graph, Node, Label>? labelKnot, CancellationToken cancellationToken = default);
     }
 
     namespace v01
@@ -158,6 +175,16 @@ namespace Monbetsu.Test
     {
         class TestGraphEnvironment : Monbetsu.v03.MonbetsuClassifier<Graph, Node, Edge, Label>, ITestGraphEnvironment
         {
+            public void ClassifyIntegratedly(Graph graph, IEnumerable<Node> startNodes, EdgeLabeler<Graph, Node, Edge, Label>? labelEdge, SeriesSubgraphLabeler<Graph, Node, Label>? labelSeries, ParallelSubgraphLabeler<Graph, Node, Label>? labelParallel, KnotSubgraphLabeler<Graph, Node, Label>? labelKnot, CancellationToken cancellationToken = default)
+            {
+                throw new NotImplementedException();
+            }
+
+            public void ClassifyUniquely(Graph graph, IEnumerable<Node> startNodes, EdgeLabeler<Graph, Node, Edge, Label>? labelEdge, UniquelySeriesSubgraphLabeler<Graph, Node, Label>? labelSeries, ParallelSubgraphLabeler<Graph, Node, Label>? labelParallel, KnotSubgraphLabeler<Graph, Node, Label>? labelKnot, CancellationToken cancellationToken = default)
+            {
+                throw new NotImplementedException();
+            }
+
             protected virtual Label CreateLabelFromEdge(Graph graph, Node fromNode, Edge edge, Node toNode)
             {
                 return new Label { BaseEdge = edge, Kind = GroupKind.Edge };
