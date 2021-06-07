@@ -1,0 +1,59 @@
+#menu > * {
+    margin-top: auto;
+    margin-bottom: auto;
+    margin-left: 3px;
+}
+
+#result {
+    border: 2px solid #88c;
+}
+
+#graph-image {
+    background-color: #ffc;
+}
+
+@media (min-width: 641px) {
+    #index {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto 1fr;
+        grid-template-areas: 'header header' 'code result';
+        width: 98%;
+        height: 98%;
+    }
+
+    #menu {
+        grid-area: header;
+        padding-bottom: 1ex;
+    }
+
+    #code {
+        grid-area: code;
+        min-height: 0px;
+        height: 100%;
+    }
+
+    #result {
+        grid-area: result;
+        min-height: 0px;
+        height: 100%;
+    }
+
+    #graph-image {
+        height: 100%;
+    }
+}
+
+@media (max-width: 640.98px) {
+    #code {
+        min-height: 50vh;
+    }
+
+    #result {
+        min-height: 50vh;
+    }
+
+    #graph-image {
+        height: calc(50vh - 4px);
+    }
+}

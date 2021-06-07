@@ -233,7 +233,7 @@ namespace Monbetsu.Docs
         }
     }
 
-    [Ignore("only for docs")]
+    //[Ignore("only for docs")]
     public class Demo
     {
         [Test]
@@ -245,6 +245,7 @@ namespace Monbetsu.Docs
         }
 
         [Test]
+        [Ignore("only for docs")]
         public void PublishToPagesTest()
         {
             // docker run --rm --volume="$(PWD):/srv/jekyll" -it -p 4000:4000 jekyll/jekyll jekyll serve -b /Monbetsu
@@ -269,7 +270,7 @@ namespace Monbetsu.Docs
             var startInfo = new ProcessStartInfo
             {
                 FileName = "dotnet",
-                Arguments = PathUtil.Arguments("publish", "-o", publishDirPath, "-c", "Release"),
+                Arguments = PathUtil.Arguments("publish", "-o", publishDirPath, "-c", "Release", "-p:BlazorEnableCompression=false"),
                 WorkingDirectory = demoProjDirPath,
             };
 
@@ -277,7 +278,19 @@ namespace Monbetsu.Docs
 
             PathUtil.CopyDicrectory(Path.Combine(publishDirPath, "wwwroot"), destinationPath);
 
+            Rebase(Path.Combine(destinationPath, "index.html"), "/Monbetsu/");
+
             Directory.Delete(publishDirPath, true);
+        }
+
+        private void Rebase(string htmlPath, string newBase)
+        {
+            var escaped = Uri.EscapeUriString(newBase);
+            var regex = new Regex(@"(<base\s+href\s*=\s*['""])([^'""]+)(['""]\s*/>)");
+            var indexHtmlLines = File.ReadAllLines(htmlPath);
+            var indexHtmlText = string.Join('\n', indexHtmlLines.Select(line => regex.Replace(line, match => match.Groups[1].Value + escaped + match.Groups[3].Value)));
+
+            File.WriteAllText(htmlPath, indexHtmlText);
         }
 
     }

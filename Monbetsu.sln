@@ -37,9 +37,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "images", "images", "{02E0A5
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BuildTests", "BuildTests", "{CC9B872A-0878-4CCC-BC69-2531D68A302A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreBuild", "BuildTests\CoreBuild\CoreBuild.csproj", "{624438FC-2FC2-4496-9755-ED0CAB36C592}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CoreBuild", "BuildTests\CoreBuild\CoreBuild.csproj", "{624438FC-2FC2-4496-9755-ED0CAB36C592}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StandardBuild", "BuildTests\StandardBuild\StandardBuild.csproj", "{A7DB3AD3-C99A-4285-8D9B-722DA4642E10}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StandardBuild", "BuildTests\StandardBuild\StandardBuild.csproj", "{A7DB3AD3-C99A-4285-8D9B-722DA4642E10}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FrameworkBuild", "BuildTests\FrameworkBuild\FrameworkBuild.csproj", "{C754B026-EC4B-4366-BCD7-1AA6913C059B}"
 EndProject

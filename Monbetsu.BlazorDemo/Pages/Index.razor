@@ -4,22 +4,25 @@
 @inject IJSRuntime JSRuntime;
 
 <div id="index">
+    <section id="menu" class="form-group row">
+        <button class="btn @viewButtonStyle" id="view-button" @onclick="RefreshGraphAsync">view graph</button>
+        <button class="btn @classifyButtonStyle" id="classify-button" @onclick="ClassifyGraphAsync">classify</button>
+		<select class="form-control-sm" @bind="variation">
+			<optgroup label="variation">
+				<option value="@Variation.Default">Default</option>
+				<option value="@Variation.Unique">Unique</option>
+				<option value="@Variation.Integrated">Integrated</option>
+			</optgroup>
+        </select>
+        <span class="align-middle">@resultMessage</span>
+    </section>
+
     <div id="result">
         <div id="graph-image" @ref="graphImageElement"></div>
     </div>
     <textarea id="code" class="form-control" @bind="graphCode" @oninput="CheckCodeChangeAsync">
     </textarea>
 
-    <section id="menu" class="form-group row">
-        <button class="btn @viewButtonStyle" id="view-button" @onclick="RefreshGraphAsync">view graph</button>
-        <button class="btn @classifyButtonStyle" id="classify-button" @onclick="ClassifyGraphAsync">classify</button>
-        <select class="form-control-sm" @bind="variation">
-            <option value="@Variation.Default">Default</option>
-            <option value="@Variation.Unique">Unique</option>
-            <option value="@Variation.Integrated">Integrated</option>
-        </select>
-        <span>@resultMessage</span>
-    </section>
 </div>
 
 @code
